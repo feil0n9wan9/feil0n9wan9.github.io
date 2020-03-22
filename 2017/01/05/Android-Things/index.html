@@ -1,6 +1,6 @@
 <!DOCTYPE HTML>
 <html>
-<head>
+<head><meta name="generator" content="Hexo 3.9.0">
   <meta charset="utf-8">
   
   <title>Android Things | 静静的扯淡</title>
@@ -22,12 +22,12 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-  <meta property="og:title" content="Android Things"/>
+  <meta property="og:title" content="Android Things">
 
-  <meta property="og:site_name" content="静静的扯淡"/>
+  <meta property="og:site_name" content="静静的扯淡">
 
   
-  <meta property="og:image" content="/favicon.ico"/>
+  <meta property="og:image" content="/favicon.ico">
   
 
   <link href="/favicon.ico" rel="icon">
@@ -92,7 +92,7 @@
         <p><a href="https://www.google.com.hk/" target="_blank" rel="noopener">Google</a>于12月13日对外发布了其新一代物联网操作系统<a href="https://developer.android.com/things/index.html" target="_blank" rel="noopener">Android Things</a>，它的愿景是为各种消费、零售和工业应用程序提供互连的设备，并提供完整立即可用的硬件解决方案，以进一步实现<a href="https://developer.android.com/things/index.html" target="_blank" rel="noopener">If you can build an app, you can build a device</a>。<br><a id="more"></a></p>
 <p><a href="https://developer.android.com/things/index.html" target="_blank" rel="noopener">Android Things</a>的前身是<a href="https://www.google.com.hk/" target="_blank" rel="noopener">Google</a>在其<a href="https://baike.baidu.com/item/Google%20I%2FO?fr=aladdin" target="_blank" rel="noopener">2015年I/O全球开发者大会</a>上推出的基于<a href="https://www.android.com" target="_blank" rel="noopener">Android</a>的物联网项目<a href="https://android.googlesource.com/brillo/manifest/" target="_blank" rel="noopener">Brillo</a>。然而经过一年多的发展，由于使用C/C++基于NDK进行开发，并且缺乏相应的开发工具，<a href="https://android.googlesource.com/brillo/manifest/" target="_blank" rel="noopener">Brillo</a>项目未能吸引足够的开发人员加入。<a href="https://developer.android.com/things/index.html" target="_blank" rel="noopener">Android Things</a>吸取了<a href="https://android.googlesource.com/brillo/manifest/" target="_blank" rel="noopener">Brillo</a>项目的反馈，通过Java API面向广大的Android和Java开发者，并加入了熟悉的工具，如<a href="https://developer.android.com/studio/index.html" target="_blank" rel="noopener">Android Studio</a>，<a href="https://developer.android.com/ndk/index.html" target="_blank" rel="noopener">Android SDK</a>，<a href="https://developers.google.com/android/guides/overview" target="_blank" rel="noopener">Google Play服务</a>和<a href="https://cloud.google.com/" target="_blank" rel="noopener">Google云平台</a>等。</p>
 <h3 id="Android-Things架构"><a href="#Android-Things架构" class="headerlink" title="Android Things架构"></a>Android Things架构</h3><p>先看Brillo和Android Things的架构图对比：</p>
-<p>这是<strong>Brillo</strong>：<br><img src="http://oartlnou9.bkt.clouddn.com/android-things/images/brillo-architecture.png" alt=""><br>这是<strong>Android Things</strong>：<br><img src="http://oartlnou9.bkt.clouddn.com/android-things/images/androidthings-architecture.png" alt=""></p>
+<p>这是<strong>Brillo</strong>：<br><img src="/images/android-things/brillo-architecture.png" alt><br>这是<strong>Android Things</strong>：<br><img src="/images/android-things/androidthings-architecture.png" alt></p>
 <p><strong>可以很清楚的看出来</strong>：</p>
 <ul>
 <li>Brillo是一个非常精剪的Androd运行时环境，没有ART，可以看成只运行Linux内核和部分Android本地库的Android系统，可以运行的硬件最低配置为32M内存和128M存储，使用C/C++基于NDK进行开发，开发和部署明显不同于<a href="https://www.android.com" target="_blank" rel="noopener">核心Android</a>。Android Things与<a href="https://www.android.com" target="_blank" rel="noopener">核心Android</a>框架大致相同，支持<a href="https://developers.google.com/android/" target="_blank" rel="noopener">Google APIs for Android</a>的一个子集，并通过引入<a href="https://developer.android.com/things/sdk/index.html#things_support_library" target="_blank" rel="noopener">Things Support Library</a>提供了额外的API，这些API支持创建用户驱动程序，允许应用集成原先没有的新硬件。</li>
@@ -100,7 +100,7 @@
 <li>利用Android系统的<a href="https://source.android.com/devices/tech/ota/index.html" target="_blank" rel="noopener">OTA更新</a>机制，设备能够及时收到Google官方安全更新、bug fixes等，开发人员能够集中精力于构建产品本身。</li>
 <li>不管是Brillo还是Android Things均运行于Linux之上，而Linux是一个使用<a href="https://en.wikipedia.org/wiki/Virtual_memory" target="_blank" rel="noopener">虚拟内存</a>技术的操作系统。这意味着Android Things所运行的处理器必须支持虚拟内存，换句话说，Android Things所运行的处理器是一个拥有完<a href="https://en.wikipedia.org/wiki/Memory_management_unit" target="_blank" rel="noopener">MMU</a>的处理器。</li>
 </ul>
-<h3 id="Android-Things协议"><a href="#Android-Things协议" class="headerlink" title="Android Things协议"></a>Android Things协议</h3><p>Android Things默认集成<a href="https://developers.google.com/weave/" target="_blank" rel="noopener">Weave</a>协议。<a href="https://developers.google.com/weave/" target="_blank" rel="noopener">Weave</a>是一个物联网通讯协议，不仅支持设备与设备连接，还支持手机与设备连接，手机、设备连接至Google服务的强大能力。同时，<a href="https://developers.google.com/weave/" target="_blank" rel="noopener">Weave</a>也不依赖于任何通信协议，它可以运行在Wi-Fi，BLE，Zigbee等常见的通信协议之上。<img src="http://oartlnou9.bkt.clouddn.com/android-things/images/weave.jpg" alt=""><br>由于<a href="https://developers.google.com/weave/" target="_blank" rel="noopener">Weave</a>被设计为一个平台无关的通信协议，针对不同的目标设备，包括资源受限的嵌入式设备，Weave通过引入不同的实现方式来应对。这些不同目标设备上的代码或组件，共同组合了Weave。</p>
+<h3 id="Android-Things协议"><a href="#Android-Things协议" class="headerlink" title="Android Things协议"></a>Android Things协议</h3><p>Android Things默认集成<a href="https://developers.google.com/weave/" target="_blank" rel="noopener">Weave</a>协议。<a href="https://developers.google.com/weave/" target="_blank" rel="noopener">Weave</a>是一个物联网通讯协议，不仅支持设备与设备连接，还支持手机与设备连接，手机、设备连接至Google服务的强大能力。同时，<a href="https://developers.google.com/weave/" target="_blank" rel="noopener">Weave</a>也不依赖于任何通信协议，它可以运行在Wi-Fi，BLE，Zigbee等常见的通信协议之上。<img src="/images/android-things/images/weave.jpg" alt><br>由于<a href="https://developers.google.com/weave/" target="_blank" rel="noopener">Weave</a>被设计为一个平台无关的通信协议，针对不同的目标设备，包括资源受限的嵌入式设备，Weave通过引入不同的实现方式来应对。这些不同目标设备上的代码或组件，共同组合了Weave。</p>
 <p>Weave提供了一套标准的设备操作命令（叫做Schema），以及对应的认证机制。Weave对常见的物联网设备，当前主要是智能家居设备，进行了总结和抽象，并形成了一套固定的操作命令集合，内部叫做Schema，并以<a href="https://en.wikipedia.org/wiki/JSON" target="_blank" rel="noopener">JSON格式</a>进行描述。Weave这样做的目标，是希望达到不同设备厂商的设备之间，只要使用了Weave，就可以相互操作的目的。同时Weave还引入了一套认证机制，不在标准schema框架内的设备及操作，可以经过Google的认证后，添加到标准schema中。这样就确保了整个schema框架的可扩展性，长此以往，就可以形成一个完整和丰富的生态链。</p>
 <h3 id="Android-Things硬件"><a href="#Android-Things硬件" class="headerlink" title="Android Things硬件"></a>Android Things硬件</h3><p>Android Things与SoC厂商合作，通过提供包含SoMs（System-on-Modules）的认证开发板使得开发者即使不了解嵌入式系统设计也能够快速开发完整的产品。SoMs将SoC，内存，Flash存储，WiFi，蓝牙等整合在一块开发板上。一站式硬件解决方案、Google管理BSP支持以及基于Android SDK、Android Studio的软件开发平台，极大的降低了开发门槛及成本。</p>
 <p>Android Things现在官方支持的开发板包括<a href="https://developer.android.com/things/hardware/edison.html" target="_blank" rel="noopener">Intel Edison</a>，<a href="https://developer.android.com/things/hardware/joule.html" target="_blank" rel="noopener">Intel Joule</a>（Android Things Developer Preview 2新增），<a href="https://developer.android.com/things/hardware/pico.html" target="_blank" rel="noopener">NXP Pico i.MX6UL</a>，<a href="https://developer.android.com/things/hardware/raspberrypi.html" target="_blank" rel="noopener">Raspberry Pi 3</a>，厂商可以通过<a href="https://developer.android.com/things/hardware/partner-toolkit.html#messaging_guidelines" target="_blank" rel="noopener">Partner ToolKit</a>来申请Android Things的官方认证。</p>
@@ -184,7 +184,7 @@
   <p class="site-info">
     </br>
     
-    &copy; 2018 Feilong Wang
+    &copy; 2020 Feilong Wang
     
     </br>
     The content of this site is licensed under
