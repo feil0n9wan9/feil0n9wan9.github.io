@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>项目 on 静静的扯淡</title>
+    <link>https://feil0n9wan9.github.io/tags/%E9%A1%B9%E7%9B%AE/</link>
+    <description>Recent content in 项目 on 静静的扯淡</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <copyright>© Feilong Wang</copyright>
+    <lastBuildDate>Mon, 29 Aug 2016 23:15:23 +0000</lastBuildDate>
+    <atom:link href="https://feil0n9wan9.github.io/tags/%E9%A1%B9%E7%9B%AE/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Git多项目管理</title>
+      <link>https://feil0n9wan9.github.io/posts/managing-projects-across-git-repositories/</link>
+      <pubDate>Mon, 29 Aug 2016 23:15:23 +0000</pubDate>
+      <guid>https://feil0n9wan9.github.io/posts/managing-projects-across-git-repositories/</guid>
+      <description>&lt;p&gt;开发中我们经常会遇到这样的情况：项目越来越大，一些通用的模块我们希望将他抽离出来作为单独的项目，以便其他项目也可以使用，或者使用一些第三方库，可能我们并不想将代码直接拷贝进我们的项目里面，而仅仅只是单纯的引用。这时问题来了，你想把他们当做独立的项目，同时又想在项目中使用另一个。&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

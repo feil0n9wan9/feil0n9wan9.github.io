@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html><head lang="en">
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>Git多项目管理 - 静静的扯淡</title><meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="开发中我们经常会遇到这样的情况：项目越来越大，一些通用的模块我们希望将他抽离出来作为单独的项目，以便其他项目也可以使用，或者使用一些第三方库，可能我们并不想将代码直接拷贝进我们的项目里面，而仅仅只是单纯的引用。这时问题来了，你想把他们当做独立的项目，同时又想在项目中使用另一个。" />
+	<meta property="og:image" content="https://raw.githubusercontent.com/feil0n9wan9/feil0n9wan9.github.io/master/images/about/me.jpg"/>
+	<meta property="og:title" content="Git多项目管理" />
+<meta property="og:description" content="开发中我们经常会遇到这样的情况：项目越来越大，一些通用的模块我们希望将他抽离出来作为单独的项目，以便其他项目也可以使用，或者使用一些第三方库，可能我们并不想将代码直接拷贝进我们的项目里面，而仅仅只是单纯的引用。这时问题来了，你想把他们当做独立的项目，同时又想在项目中使用另一个。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://feil0n9wan9.github.io/posts/managing-projects-across-git-repositories/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2016-08-29T23:15:23+00:00" />
+<meta property="article:modified_time" content="2016-08-29T23:15:23+00:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Git多项目管理"/>
+<meta name="twitter:description" content="开发中我们经常会遇到这样的情况：项目越来越大，一些通用的模块我们希望将他抽离出来作为单独的项目，以便其他项目也可以使用，或者使用一些第三方库，可能我们并不想将代码直接拷贝进我们的项目里面，而仅仅只是单纯的引用。这时问题来了，你想把他们当做独立的项目，同时又想在项目中使用另一个。"/>
+<script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+	<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@1,500&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Fira+Sans&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css?family=Roboto+Mono" rel="stylesheet">
+
+	
+	<link rel="stylesheet" type="text/css" media="screen" href="https://feil0n9wan9.github.io/css/main.ac08a4c9714baa859217f92f051deb58df2938ec352b506df655005dcaf98cc0.css" />
+		<link id="darkModeStyle" rel="stylesheet" type="text/css" href="https://feil0n9wan9.github.io/css/dark.726cd11ca6eb7c4f7d48eb420354f814e5c1b94281aaf8fd0511c1319f7f78a4.css"   />
+	
+
+	
+	
+
+	
+	
+	
+	
+</head>
+<body>
+        <div class="content"><header>
+	<div class="main">
+		<a href="https://feil0n9wan9.github.io">静静的扯淡</a>
+	</div>
+	<nav>
+		
+		<a href="/">Home</a>
+		
+		<a href="/posts">Posts</a>
+		
+		<a href="/tags">Tags</a>
+		
+		<a href="/about">About</a>
+		
+		
+	</nav>
+</header>
+
+<main>
+	<article>
+		<div class="title">
+			<h1 class="title">Git多项目管理</h1>
+			<div class="meta">Posted on Aug 29, 2016</div>
+		</div>
+		
+
+		<section class="body">
+			<p>开发中我们经常会遇到这样的情况：项目越来越大，一些通用的模块我们希望将他抽离出来作为单独的项目，以便其他项目也可以使用，或者使用一些第三方库，可能我们并不想将代码直接拷贝进我们的项目里面，而仅仅只是单纯的引用。这时问题来了，你想把他们当做独立的项目，同时又想在项目中使用另一个。</p>
+<p>我们举一个例子。假设你正在使用<a href="https://hexo.io">Hexo</a>搭建自己的个人博客，然后使用了某个主题。<a href="https://hexo.io">Hexo</a>中的<a href="https://hexo.io/themes/">主题</a>通常以独立项目的形式提供。如果直接将主题项目代码复制到博客项目中，不仅丢弃了主题项目的维护历史，同时你将再也无法自由及时地合并上游的更新。这时你就需要在个人博客项目中引用主题项目。</p>
+<p>基于Git有多种方式来解决这个问题：<a href="#Git-Submodule">Git Submodule</a>，<a href="#Git-Subtree">Git Subtree</a>，<a href="#GitSlave">GitSlave</a>和<a href="#Google-Repo">Google Repo</a>。</p>
+<h3 id="git-submodule">Git Submodule</h3>
+<p>Git 1.5.3中加入了<a href="https://mirrors.edge.kernel.org/pub/software/scm/git/docs/git-submodule.html">git submodule</a>这个命令。Git子模块允许你将一个Git仓库作为另一个Git仓库的子目录。它能让你将另一个仓库克隆到自己的项目中，同时还保持独立的提交。</p>
+<h4 id="添加子模块">添加子模块</h4>
+<p>将一个已存在的Git仓库添加为正在工作的仓库的子模块，可以使用<code>git submodule add &lt;repository&gt; [&lt;path&gt;]</code>命令。以Hexo博客添加Hacker主题为例：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ git submodule add /private/tmp/remote/Hacker.git themes/Hacker
+</span></span><span style="display:flex;"><span>Cloning into &#39;/private/tmp/feilongwang.org/themes/Hacker&#39;...
+</span></span><span style="display:flex;"><span>done.
+</span></span></code></pre></div><p>默认情况下，子模块会将子项目放在一个与仓库同名的目录中。我们也可以通过在命令结尾添加一个<code>path</code>来指定放到其他地方。</p>
+<p>如果这时运行<code>git status</code>，你会注意到2件事情。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ git status
+</span></span><span style="display:flex;"><span>On branch master
+</span></span><span style="display:flex;"><span>Your branch is up-to-date with &#39;origin/master&#39;.
+</span></span><span style="display:flex;"><span>Changes to be committed:
+</span></span><span style="display:flex;"><span>  (use &#34;git reset HEAD &lt;file&gt;...&#34; to unstage)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	new file:   .gitmodules
+</span></span><span style="display:flex;"><span>	new file:   themes/Hacker
+</span></span></code></pre></div><p>首先应当注意到新的<code>.gitmodules</code>文件。该文件保存了子模块的<code>url</code>与本地目录之间的映射：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>[submodule &#34;themes/Hacker&#34;]
+</span></span><span style="display:flex;"><span>	path = themes/Hacker
+</span></span><span style="display:flex;"><span>	url = /private/tmp/remote/Hacker.git
+</span></span></code></pre></div><p>如果有多个子模块，该文件中就会有多条记录。</p>
+<p>在<code>git status</code>输出中列出的另一个是项目文件夹记录。如果你运行<code>git diff</code>，会看到类似下面的信息：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ git diff --cached themes/Hacker
+</span></span><span style="display:flex;"><span>diff --git a/themes/Hacker b/themes/Hacker
+</span></span><span style="display:flex;"><span>new file mode 160000
+</span></span><span style="display:flex;"><span>index 0000000..98260cd
+</span></span><span style="display:flex;"><span>--- /dev/null
+</span></span><span style="display:flex;"><span>+++ b/themes/Hacker
+</span></span><span style="display:flex;"><span>@@ -0,0 +1 @@
+</span></span><span style="display:flex;"><span>+Subproject commit 98260cd27f0bb6340757cd05c3fb00d574b42d52
+</span></span></code></pre></div><p>虽然<code>themes/Hacker</code>是工作目录中的一个子目录，但Git将它视作一个子模块。当你不在那个目录中时，Git并不会跟踪他的内容，而是将它看作该仓库中的一个特殊提交。该特殊提交记录着父项目依赖的子模块的版本（子模块当前HEAD所指向的版本）。</p>
+<blockquote>
+<p>注意<code>themes/Hacker</code>记录的<code>160000</code>模式。这是Git中的一种特殊模式，它本质上意味着你是将一次提交记作一项目录记录的，而非将它记录成一个子目录或者一个文件。</p>
+</blockquote>
+<p>除了<code>git status</code>看到的差异外，还有个隐藏的变化在<code>.git/config</code>中：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ cat .git/config 
+</span></span><span style="display:flex;"><span>[core]
+</span></span><span style="display:flex;"><span>	repositoryformatversion = 0
+</span></span><span style="display:flex;"><span>	filemode = true
+</span></span><span style="display:flex;"><span>	bare = false
+</span></span><span style="display:flex;"><span>	logallrefupdates = true
+</span></span><span style="display:flex;"><span>	ignorecase = true
+</span></span><span style="display:flex;"><span>	precomposeunicode = true
+</span></span><span style="display:flex;"><span>[remote &#34;origin&#34;]
+</span></span><span style="display:flex;"><span>	url = /private/tmp/remote/feilongwang.org.git
+</span></span><span style="display:flex;"><span>	fetch = +refs/heads/*:refs/remotes/origin/*
+</span></span><span style="display:flex;"><span>[branch &#34;master&#34;]
+</span></span><span style="display:flex;"><span>	remote = origin
+</span></span><span style="display:flex;"><span>	merge = refs/heads/master
+</span></span><span style="display:flex;"><span>[submodule &#34;themes/Hacker&#34;]
+</span></span><span style="display:flex;"><span>	url = /private/tmp/remote/Hacker.git
+</span></span></code></pre></div><p>父项目的<code>.git/config</code>文件中也保存了子模块的信息，所以你可以根据自己的需要，通过配置父项目<code>.git/config</code>文件来覆盖<code>.gitmodules</code>中的配置。如通过在本地执行<code>git config submodule.themes/Hacker.url &lt;url&gt;</code>来覆盖<code>.gitmodules</code>中的<code>url</code>。</p>
+<h4 id="克隆子模块">克隆子模块</h4>
+<p>当你克隆一个含有子模块的项目时，默认会包含该子模块目录，但其中还没有任何文件。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ git clone /private/tmp/remote/feilongwang.org.git
+</span></span><span style="display:flex;"><span>Cloning into &#39;feilongwang.org&#39;...
+</span></span><span style="display:flex;"><span>done.
+</span></span><span style="display:flex;"><span>$ cd feilongwang.org/themes/Hacker/
+</span></span><span style="display:flex;"><span>$ ls -al
+</span></span><span style="display:flex;"><span>total 0
+</span></span><span style="display:flex;"><span>drwxr-xr-x 2 wangfeilong wheel  68  9 19 03:01 ./
+</span></span><span style="display:flex;"><span>drwxr-xr-x 4 wangfeilong wheel 136  9 19 03:01 ../
+</span></span></code></pre></div><p>你必须运行两个命令：<code>git submodule init</code>用来初始化本地配置文件，而<code>git submodule update</code>则从该项目中抓取所有数据并检出父项目中列出的合适的提交。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ git submodule init
+</span></span><span style="display:flex;"><span>Submodule &#39;themes/Hacker&#39; (/private/tmp/remote/Hacker.git) registered for path &#39;themes/Hacker&#39;
+</span></span><span style="display:flex;"><span>$ git submodule update
+</span></span><span style="display:flex;"><span>Cloning into &#39;/private/tmp/feilongwang.org/themes/Hacker&#39;...
+</span></span><span style="display:flex;"><span>done.
+</span></span><span style="display:flex;"><span>Submodule path &#39;themes/Hacker&#39;: checked out &#39;dc4a047cac6f26c47aba7bcd5b36f3ea7d3abf8b&#39;
+</span></span></code></pre></div><p>现在<code>themes/Hacker</code>就处在和之前提交时相同的状态。</p>
+<p>不过还有更简单一点的方式。如果给<code>git clone</code>命令传递<code>--recursive</code>选项，它就会自动初始化并更新仓库中的每一个子模块。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ git clone --recursive /private/tmp/remote/feilongwang.org.git
+</span></span><span style="display:flex;"><span>Cloning into &#39;feilongwang.org&#39;...
+</span></span><span style="display:flex;"><span>done.
+</span></span><span style="display:flex;"><span>Submodule &#39;themes/Hacker&#39; (/private/tmp/remote/Hacker.git) registered for path &#39;themes/Hacker&#39;
+</span></span><span style="display:flex;"><span>Cloning into &#39;/private/tmp/feilongwang.org/themes/Hacker&#39;...
+</span></span><span style="display:flex;"><span>done.
+</span></span><span style="display:flex;"><span>Submodule path &#39;themes/Hacker&#39;: checked out &#39;dc4a047cac6f26c47aba7bcd5b36f3ea7d3abf8b&#39;
+</span></span></code></pre></div><h4 id="更新子模块">更新子模块</h4>
+<p>假如在当前开发中，父项目只是使用子项目并不时的获取更新。这时你可以进入到子模块目录中运行<code>git fetch</code>与<code>git merge</code>，合并上游分支来更新本地代码。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ git fetch &amp;&amp; git merge origin/master 
+</span></span><span style="display:flex;"><span>Updating dc4a047..76e18c4
+</span></span><span style="display:flex;"><span>Fast-forward
+</span></span><span style="display:flex;"><span> layout/components/footer.ejs | 3 ++-
+</span></span><span style="display:flex;"><span> 1 file changed, 2 insertions(+), 1 deletion(-)
+</span></span></code></pre></div><p>如果你不想在子模块目录中手动抓取与合并，那么还有种更容易的方式。运行<code>git submodule update --remote</code>，Git将会进入子模块然后抓取并更新。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ git submodule update --remote
+</span></span><span style="display:flex;"><span>remote: Counting objects: 5, done.
+</span></span><span style="display:flex;"><span>remote: Compressing objects: 100% (5/5), done.
+</span></span><span style="display:flex;"><span>remote: Total 5 (delta 4), reused 0 (delta 0)
+</span></span><span style="display:flex;"><span>Unpacking objects: 100% (5/5), done.
+</span></span><span style="display:flex;"><span>From /private/tmp/remote/Hacker
+</span></span><span style="display:flex;"><span>   dc4a047..76e18c4  master     -&gt; origin/master
+</span></span><span style="display:flex;"><span>Submodule path &#39;themes/Hacker&#39;: checked out &#39;76e18c4e5c915302fe2545f16c1df9350b33439f&#39;
+</span></span></code></pre></div><p>此命令默认会假定你想要更新并检出所有子模块仓库的master分支。不过你也可以指定想要更新的子模块、想要更新的分支以及更新后进行的操作。</p>
+<p>这时我们运行<code>git status</code>，Git会显示子模块中有“新提交”：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ git status
+</span></span><span style="display:flex;"><span>On branch master
+</span></span><span style="display:flex;"><span>Your branch is up-to-date with &#39;origin/master&#39;.
+</span></span><span style="display:flex;"><span>Changes not staged for commit:
+</span></span><span style="display:flex;"><span>  (use &#34;git add &lt;file&gt;...&#34; to update what will be committed)
+</span></span><span style="display:flex;"><span>  (use &#34;git checkout -- &lt;file&gt;...&#34; to discard changes in working directory)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	modified:   themes/Hacker (new commits)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>no changes added to commit (use &#34;git add&#34; and/or &#34;git commit -a&#34;)
+</span></span></code></pre></div><p>如果在此时提交，那么你会将父项目锁定为子模块<code>master</code>分支最新的代码。</p>
+<p>假如你希望在父项目上编写代码的同时又在子模块上编写代码，那又该如何处理呢？</p>
+<p>当我们运行<code>git submodule update</code>从子模块仓库中抓取修改时，Git将会获得这些改动并更新子目录中的文件，但是会将子仓库留在一个称作 “游离的 HEAD”的状态。这意味着没有本地工作分支（例如 “master”）跟踪改动。所以你做的任何改动都不会被跟踪。</p>
+<p>为了将子模块设置得更容易进入并修改，你应该进入每个必要的子模块并检出topic工作分支：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ git checkout -b featureA
+</span></span><span style="display:flex;"><span>Switched to a new branch &#39;featureA&#39;
+</span></span></code></pre></div><p>然后，我们可以对子模块做些改动，使用<code>git fetch</code>或者<code>git pull</code>来更新代码，<code>git merge</code>或者<code>git rebase</code>合并改动，就像独立的项目开发一样。</p>
+<p>当然，我们也可以在父项目中使用<code>git submodule update --remote --merge</code>或者<code>git submodule update --remote --rebase</code>来合并代码。如：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ git submodule update --remote --rebase
+</span></span><span style="display:flex;"><span>remote: Counting objects: 5, done.
+</span></span><span style="display:flex;"><span>remote: Compressing objects: 100% (5/5), done.
+</span></span><span style="display:flex;"><span>remote: Total 5 (delta 4), reused 0 (delta 0)
+</span></span><span style="display:flex;"><span>Unpacking objects: 100% (5/5), done.
+</span></span><span style="display:flex;"><span>From /private/tmp/remote/Hacker
+</span></span><span style="display:flex;"><span>   98260cd..5eb6d18  master     -&gt; origin/master
+</span></span><span style="display:flex;"><span>First, rewinding head to replay your work on top of it...
+</span></span><span style="display:flex;"><span>Applying: Update README.md
+</span></span><span style="display:flex;"><span>Submodule path &#39;themes/Hacker&#39;: rebased into &#39;5eb6d185e1efea4cd4bd48d046a6f8fb376b6836&#39;
+</span></span></code></pre></div><p>如果你没有提交子模块的改动，那么运行一个子模块更新也不会出现问题，此时Git会只抓取更改而并不会覆盖子模块目录中未保存的工作。</p>
+<p>如果你忘记<code>--rebase</code>或<code>--merge</code>，Git会将子模块更新为服务器上的状态。并且会将项目重置为一个游离的HEAD状态。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ git submodule update --remote
+</span></span><span style="display:flex;"><span>Submodule path &#39;themes/Hacker&#39;: checked out &#39;5eb6d185e1efea4cd4bd48d046a6f8fb376b6836&#39;
+</span></span></code></pre></div><p>即便这真的发生了也不要紧，你只需回到目录中再次检出你的分支（即还包含着你的工作的分支）然后手动地合并或变基对应的分支（或任何一个你想要的远程分支）就行了。</p>
+<p>如果你做了一些与上游改动冲突的改动，当运行更新时Git会让你知道，然后你可以进入子模块目录中然后就像平时那样修复冲突。</p>
+<h4 id="提交子模块">提交子模块</h4>
+<p>如果我们在父项目中提交并推送但并不推送子模块上的改动，其他尝试检出我们修改的人会遇到麻烦，因为他们无法得到依赖的子模块改动。那些改动只存在于我们本地的拷贝中。</p>
+<p>提交子模块的改动最简单的选项是进入每一个子模块中然后手动推送到远程仓库。然而<code>git push</code>命令接受值为<code>on-demand</code>的<code>--recurse-submodules</code>参数，它会尝试为你这样做。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ git push --recurse-submodules=on-demand 
+</span></span><span style="display:flex;"><span>Pushing submodule &#39;themes/Hacker&#39;
+</span></span><span style="display:flex;"><span>Counting objects: 3, done.
+</span></span><span style="display:flex;"><span>Delta compression using up to 8 threads.
+</span></span><span style="display:flex;"><span>Compressing objects: 100% (3/3), done.
+</span></span><span style="display:flex;"><span>Writing objects: 100% (3/3), 344 bytes | 0 bytes/s, done.
+</span></span><span style="display:flex;"><span>Total 3 (delta 2), reused 0 (delta 0)
+</span></span><span style="display:flex;"><span>To /private/tmp/remote/Hacker.git
+</span></span><span style="display:flex;"><span>   76e18c4..26fa290  master -&gt; master
+</span></span><span style="display:flex;"><span>Counting objects: 3, done.
+</span></span><span style="display:flex;"><span>Delta compression using up to 8 threads.
+</span></span><span style="display:flex;"><span>Compressing objects: 100% (2/2), done.
+</span></span><span style="display:flex;"><span>Writing objects: 100% (3/3), 324 bytes | 0 bytes/s, done.
+</span></span><span style="display:flex;"><span>Total 3 (delta 1), reused 0 (delta 0)
+</span></span><span style="display:flex;"><span>To /private/tmp/remote/feilongwang.org.git
+</span></span><span style="display:flex;"><span>   3c7501e..fb39823  master -&gt; master
+</span></span></code></pre></div><h4 id="遍历子模块">遍历子模块</h4>
+<p>如果父项目中包含大量子模块，那我们一些通用的子模块操作，如更新子模块，将会变成巨大的工作量。幸好，Git提供了<code>foreach</code>子模块命令。</p>
+<p>假如，我们想要开始开发一个新的功能或者修复一些错误，并且需要在几个子模块内工作。这时我们可能需要创建一个新的分支，然后将所有子模块都切换过去。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ git submodule foreach &#39;git checkout -b featureA&#39;
+</span></span><span style="display:flex;"><span>Entering &#39;hexo-generator-feed&#39;
+</span></span><span style="display:flex;"><span>Switched to a new branch &#39;featureA&#39;
+</span></span><span style="display:flex;"><span>Entering &#39;themes/Hacker&#39;
+</span></span><span style="display:flex;"><span>Switched to a new branch &#39;featureA&#39;
+</span></span></code></pre></div><h4 id="子模块的问题">子模块的问题</h4>
+<p>然而使用子模块还是有一些小问题：</p>
+<ul>
+<li>在父项目中<code>git pull</code>并不会自动更新子模块，需要调用<code>git submodule update</code>来更新子模块信息。如果忘记调用<code>git submodule update</code>，那么你极有可能再次把旧的子模块依赖信息提交上去。</li>
+<li>调用<code>git submodule update</code>并不会将子模块切换到任何分支，默认情况下子模块处于“游离的 HEAD”的状态。如果此时我们改动子模块而没有检出一个工作分支，那调用<code>git submodule update</code>时你所做的任何改动都会丢失。</li>
+<li>Git子模块在父项目中维护所有依赖的子模块版本，当包含大量子模块时，父项目的更新将很容发生冲突，并且父项目的维护历史与所有子模块的维护历史相互交织，维护成本也会比较高。</li>
+</ul>
+<h3 id="git-subtree">Git Subtree</h3>
+<p>Git在1.8.0版本引入了<a href="https://git.kernel.org/pub/scm/git/git.git/plain/contrib/subtree/git-subtree.txt">git subtree</a>这个命令，它使用Git的<code>subtree merge</code>策略来得到类似<code>git submodule</code>的结果。但本质上，它是将子项目的代码全部<code>merge</code>进父项目。使用<a href="https://git.kernel.org/pub/scm/git/git.git/plain/contrib/subtree/git-subtree.txt">git subtree</a>，你不仅可以将其他项目合并为父项目的一个子目录，而且可以从父项目提取某个子目录的全部历史作为一个单独的项目。</p>
+<h4 id="相比git子模块">相比Git子模块</h4>
+<ul>
+<li>管理和更新流程比较方便</li>
+<li>不再有<code>.gitmodules</code>文件</li>
+<li>克隆仓库不再需要<code>init</code>和<code>update</code>等操作</li>
+<li>删除时不再像<code>git submodule</code>那样费劲</li>
+</ul>
+<h4 id="添加子项目">添加子项目</h4>
+<p>将一个已存在的Git仓库以Subtree方式添加为子项目可以使用<code>git subtree add --prefix=&lt;prefix&gt; &lt;repository&gt; &lt;ref&gt;</code>命令，其中<code>--prefix</code>选项指定了子项目对应的子目录，<code>--squash</code>选项用以压缩Subtree的提交为一个，这样父项目的历史记录里就不会出现子项目完整的历史记录。我们还是以Hexo博客添加Hacker主题为例：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ git clone /private/tmp/remote/feilongwang.org.git
+</span></span><span style="display:flex;"><span>Cloning into &#39;feilongwang.org&#39;...
+</span></span><span style="display:flex;"><span>done.
+</span></span><span style="display:flex;"><span>$ cd feilongwang.org/
+</span></span><span style="display:flex;"><span>$ git subtree add --prefix=themes/Hacker /private/tmp/remote/Hacker.git master --squash 
+</span></span><span style="display:flex;"><span>git fetch /private/tmp/remote/Hacker.git master
+</span></span><span style="display:flex;"><span>warning: no common commits
+</span></span><span style="display:flex;"><span>remote: Counting objects: 216, done.
+</span></span><span style="display:flex;"><span>remote: Compressing objects: 100% (143/143), done.
+</span></span><span style="display:flex;"><span>remote: Total 216 (delta 70), reused 216 (delta 70)
+</span></span><span style="display:flex;"><span>Receiving objects: 100% (216/216), 56.22 KiB | 0 bytes/s, done.
+</span></span><span style="display:flex;"><span>Resolving deltas: 100% (70/70), done.
+</span></span><span style="display:flex;"><span>From /private/tmp/remote/Hacker
+</span></span><span style="display:flex;"><span> * branch            master     -&gt; FETCH_HEAD
+</span></span><span style="display:flex;"><span>Added dir &#39;themes/Hacker&#39;
+</span></span></code></pre></div><h4 id="更新子项目">更新子项目</h4>
+<p>一段时间之后，子项目可能有大量新的代码，父项目也想使用这些代码。此时父项目的维护者只需执行：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ git subtree pull --prefix=themes/Hacker /private/tmp/remote/Hacker.git master --squash 
+</span></span><span style="display:flex;"><span>remote: Counting objects: 8, done.
+</span></span><span style="display:flex;"><span>remote: Compressing objects: 100% (8/8), done.
+</span></span><span style="display:flex;"><span>remote: Total 8 (delta 6), reused 0 (delta 0)
+</span></span><span style="display:flex;"><span>Unpacking objects: 100% (8/8), done.
+</span></span><span style="display:flex;"><span>From /private/tmp/remote/Hacker
+</span></span><span style="display:flex;"><span> * branch            master     -&gt; FETCH_HEAD
+</span></span><span style="display:flex;"><span>Merge made by the &#39;recursive&#39; strategy.
+</span></span><span style="display:flex;"><span> themes/Hacker/README.md                    | 2 +-
+</span></span><span style="display:flex;"><span> themes/Hacker/layout/components/footer.ejs | 3 ++-
+</span></span><span style="display:flex;"><span> 2 files changed, 3 insertions(+), 2 deletions(-)
+</span></span></code></pre></div><p>就可以将父项目中子项目对应目录里的内容更新为子项目最新的代码了。</p>
+<p>如果你觉得每次都输入子项目完整的仓库url太麻烦，你也可以将子项目添加为追踪的仓库。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ git remote add hacker /private/tmp/remote/Hacker.git
+</span></span><span style="display:flex;"><span>$ git subtree add --prefix=themes/Hacker hacker master --squash
+</span></span><span style="display:flex;"><span>git fetch hacker master
+</span></span><span style="display:flex;"><span>From /private/tmp/remote/Hacker
+</span></span><span style="display:flex;"><span> * branch            master     -&gt; FETCH_HEAD
+</span></span><span style="display:flex;"><span> * [new branch]      master     -&gt; hacker/master
+</span></span><span style="display:flex;"><span>Added dir &#39;themes/Hacker&#39;
+</span></span></code></pre></div><h4 id="提取子项目">提取子项目</h4>
+<p>当我们开发一个项目若干时间后，希望将某个目录单独出一个项目来开发，同时又保留这部分代码历史提交记录，使用<code>git subtree split</code>可以很轻松的完成这个操作。以Hexo博客分离Hacker主题为例：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ git subtree split --prefix=themes/Hacker --branch hacker
+</span></span><span style="display:flex;"><span>Created branch &#39;hacker&#39;
+</span></span><span style="display:flex;"><span>843147f3181399b06528251451bc498e01425f34
+</span></span><span style="display:flex;"><span>$ git branch -a
+</span></span><span style="display:flex;"><span>  hacker
+</span></span><span style="display:flex;"><span>* master
+</span></span><span style="display:flex;"><span>  remotes/origin/HEAD -&gt; origin/master
+</span></span><span style="display:flex;"><span>  remotes/origin/master
+</span></span><span style="display:flex;"><span>$ git checkout hacker 
+</span></span><span style="display:flex;"><span>Switched to branch &#39;hacker&#39;
+</span></span><span style="display:flex;"><span>$ git log
+</span></span><span style="display:flex;"><span>commit 843147f3181399b06528251451bc498e01425f34
+</span></span><span style="display:flex;"><span>Author: Feilong Wang &lt;i@feilongwang.org&gt;
+</span></span><span style="display:flex;"><span>Date:   Mon Sep 19 01:16:02 2016 +0800
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    Change theme to Hacker
+</span></span></code></pre></div><p>其中<code>--branch</code>指定将生成的历史提交记录保存到一个新的分支。</p>
+<h4 id="提交子项目">提交子项目</h4>
+<p>如果我们在使用子项目的过程中，对子项目做了一些改动，同时我们又希望子项目的其他使用者也能共享这些改动，此时可以将我们的改动提交到子项目的远程仓库中。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ git subtree push --prefix=themes/Hacker /private/tmp/remote/Hacker.git master
+</span></span><span style="display:flex;"><span>git push using:  /private/tmp/remote/Hacker.git master
+</span></span><span style="display:flex;"><span>Counting objects: 301, done.
+</span></span><span style="display:flex;"><span>Delta compression using up to 8 threads.
+</span></span><span style="display:flex;"><span>Compressing objects: 100% (211/211), done.
+</span></span><span style="display:flex;"><span>Writing objects: 100% (301/301), 579.91 KiB | 0 bytes/s, done.
+</span></span><span style="display:flex;"><span>Total 301 (delta 67), reused 292 (delta 64)
+</span></span><span style="display:flex;"><span>remote: Resolving deltas: 100% (67/67), completed with 2 local objects.
+</span></span><span style="display:flex;"><span>To /private/tmp/remote/Hacker.git
+</span></span><span style="display:flex;"><span>   96ca04b..5565513  556551375034489fc8710070a29a2f22240a39b3 -&gt; master
+</span></span></code></pre></div><h3 id="gitslave">GitSlave</h3>
+<p>GitSlave用于管理相关的一个父项目和多个Slave项目。通常，它会将你要执行的Git常规操作顺序在父项目和Slave项目中执行一遍，所以当你执行pull操作，项目中的所有仓库会顺序执行pull操作。GitSlave是对Git命令的封装，是被设计用于简化多仓库的Git操作，而不是要取代Git。我们还是以Hexo博客项目和Hacker主题项目为例来说明GitSlave的用法。</p>
+<h4 id="添加slave项目">添加Slave项目</h4>
+<p>我们可以通过<code>gits prepare</code>初始化父项目，然后通过<code>gits attach</code>命令来添加Slave项目。如：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ git clone /private/tmp/remote/feilongwang.org.git
+</span></span><span style="display:flex;"><span>Cloning into &#39;feilongwang.org&#39;...
+</span></span><span style="display:flex;"><span>done.
+</span></span><span style="display:flex;"><span>$ cd feilongwang.org
+</span></span><span style="display:flex;"><span>$ gits prepare
+</span></span><span style="display:flex;"><span>[master 211dc36] gits creating .gitslave
+</span></span><span style="display:flex;"><span> 1 file changed, 0 insertions(+), 0 deletions(-)
+</span></span><span style="display:flex;"><span> create mode 100644 .gitslave
+</span></span><span style="display:flex;"><span>$ cat .gitslave
+</span></span></code></pre></div><p>可以看出，当执行<code>gits prepare</code>命令时，它会在父项目的根目录下添加一个空的<code>.gitslave</code>文件。然后我们可以执行<code>gits attach REPOSITORY LOCALPATH</code>来添加Slave项目：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ gits attach ../Hacker.git themes/Hacker
+</span></span><span style="display:flex;"><span>Cloning into &#39;themes/Hacker&#39;...
+</span></span><span style="display:flex;"><span>done.
+</span></span><span style="display:flex;"><span>[master 2e059b2] gits adding &#34;../Hacker.git&#34; &#34;themes/Hacker&#34;
+</span></span><span style="display:flex;"><span>$ git show
+</span></span><span style="display:flex;"><span>diff --git a/.gitignore b/.gitignore
+</span></span><span style="display:flex;"><span>index cd1fbcc..401d29a 100644
+</span></span><span style="display:flex;"><span>--- a/.gitignore
+</span></span><span style="display:flex;"><span>+++ b/.gitignore
+</span></span><span style="display:flex;"><span>@@ -5,3 +5,4 @@ db.json
+</span></span><span style="display:flex;"><span> node_modules/
+</span></span><span style="display:flex;"><span> public/
+</span></span><span style="display:flex;"><span> .deploy*/
+</span></span><span style="display:flex;"><span>+/themes/Hacker/
+</span></span><span style="display:flex;"><span>diff --git a/.gitslave b/.gitslave
+</span></span><span style="display:flex;"><span>index e69de29..3b17767 100644
+</span></span><span style="display:flex;"><span>--- a/.gitslave
+</span></span><span style="display:flex;"><span>+++ b/.gitslave
+</span></span><span style="display:flex;"><span>@@ -0,0 +1 @@
+</span></span><span style="display:flex;"><span>+&#34;../Hacker.git&#34; &#34;themes/Hacker&#34;
+</span></span></code></pre></div><h4 id="克隆带有slave仓库的项目">克隆带有Slave仓库的项目</h4>
+<p>我们可以使用<code>gits clone</code>来克隆带有Slave仓库的项目，如：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ gits clone /private/tmp/remote/feilongwang.org.git
+</span></span><span style="display:flex;"><span>Cloning into &#39;feilongwang.org&#39;...
+</span></span><span style="display:flex;"><span>done.
+</span></span><span style="display:flex;"><span>Cloning into &#39;themes/Hacker&#39;...
+</span></span><span style="display:flex;"><span>done.
+</span></span></code></pre></div><p>我们看到Git的克隆操作顺序在父项目与子项目中被执行。</p>
+<p>如果一开始你并知道要克隆的项目带有Slave仓库而直接将父项目克隆下来，此时我们可以通过<code>git populate</code>来进一步克隆Slave仓库，如：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ git clone /private/tmp/remote/feilongwang.org.git
+</span></span><span style="display:flex;"><span>Cloning into &#39;feilongwang.org&#39;...
+</span></span><span style="display:flex;"><span>done.
+</span></span><span style="display:flex;"><span>$ cd feilongwang.org/
+</span></span><span style="display:flex;"><span>$ ls -al
+</span></span><span style="display:flex;"><span>total 20
+</span></span><span style="display:flex;"><span>drwxr-xr-x 10 wangfeilong wheel  340 10 30 16:43 ./
+</span></span><span style="display:flex;"><span>drwxr-xr-x  3 wangfeilong wheel  102 10 30 16:43 ../
+</span></span><span style="display:flex;"><span>drwxr-xr-x 12 wangfeilong wheel  408 10 30 16:43 .git/
+</span></span><span style="display:flex;"><span>-rw-r--r--  1 wangfeilong wheel   82 10 30 16:43 .gitignore
+</span></span><span style="display:flex;"><span>-rw-r--r--  1 wangfeilong wheel   32 10 30 16:43 .gitslave
+</span></span><span style="display:flex;"><span>-rw-r--r--  1 wangfeilong wheel  540 10 30 16:43 README.md
+</span></span><span style="display:flex;"><span>-rw-r--r--  1 wangfeilong wheel 1599 10 30 16:43 _config.yml
+</span></span><span style="display:flex;"><span>-rw-r--r--  1 wangfeilong wheel  630 10 30 16:43 package.json
+</span></span><span style="display:flex;"><span>drwxr-xr-x  5 wangfeilong wheel  170 10 30 16:43 scaffolds/
+</span></span><span style="display:flex;"><span>drwxr-xr-x  6 wangfeilong wheel  204 10 30 16:43 source/
+</span></span></code></pre></div><p>此时我们发现子项目并没有被克隆。执行<code>gits populate</code>将克隆所有子项目：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ gits populate
+</span></span><span style="display:flex;"><span>Cloning into &#39;themes/Hacker&#39;...
+</span></span><span style="display:flex;"><span>done.
+</span></span></code></pre></div><h4 id="提交项目">提交项目</h4>
+<p>我们对父项目和子项目做些修改、提交并将这些改动push到服务端，只需将对应的<code>git</code>命令换成<code>gits</code>，它会顺序在所有仓库中执行对应的<code>git</code>命令，如：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ echo “*.iml&#34; &gt;&gt; .gitignore
+</span></span><span style="display:flex;"><span>$ echo “*.iml&#34; &gt;&gt; themes/Hacker/.gitignore
+</span></span><span style="display:flex;"><span>$ $ gits add -A
+</span></span><span style="display:flex;"><span>$ gits commit -m &#34;Ignore *.iml&#34;
+</span></span><span style="display:flex;"><span>On: (feilongwang.org):
+</span></span><span style="display:flex;"><span>  [master a2ff2d7] Ignore *.iml
+</span></span><span style="display:flex;"><span>   1 file changed, 1 insertion(+)
+</span></span><span style="display:flex;"><span>On: themes/Hacker:
+</span></span><span style="display:flex;"><span>  [master 03dfa7b] Ignore *.iml
+</span></span><span style="display:flex;"><span>   1 file changed, 2 insertions(+), 1 deletion(-)
+</span></span><span style="display:flex;"><span>$ gits push
+</span></span><span style="display:flex;"><span>On: (feilongwang.org):
+</span></span><span style="display:flex;"><span>  To /private/tmp/remote/feilongwang.org.git
+</span></span><span style="display:flex;"><span>     2e059b2..a2ff2d7  master -&gt; master
+</span></span><span style="display:flex;"><span>On: themes/Hacker:
+</span></span><span style="display:flex;"><span>  To /private/tmp/remote/Hacker.git
+</span></span><span style="display:flex;"><span>     dc4a047..03dfa7b  master -&gt; master
+</span></span></code></pre></div><h4 id="更新项目">更新项目</h4>
+<p>如果你想更新服务端最新代码，可以使用<code>gits pull</code>命令，它会将所有仓库代码都同步为服务端最新状态，如：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ gits pull
+</span></span><span style="display:flex;"><span>On: (feilongwang.org):
+</span></span><span style="display:flex;"><span>  Already up-to-date.
+</span></span><span style="display:flex;"><span>On: themes/Hacker:
+</span></span><span style="display:flex;"><span>  From /private/tmp/remote/%REPO%
+</span></span><span style="display:flex;"><span>    master     -&gt; origin/master
+</span></span><span style="display:flex;"><span>  Fast-forward
+</span></span><span style="display:flex;"><span>   .gitignore | 1 +
+</span></span><span style="display:flex;"><span>   1 file changed, 1 insertion(+)
+</span></span></code></pre></div><p>从上面的命令可以看出，GitSlave是对Git命令的封装，它可以简化多项目的Git操作。</p>
+<h4 id="gitslave的缺点">GitSlave的缺点</h4>
+<p>GitSlave被设计用于包含多个Slave仓库的中等大小项目的开发，其在父项目的<code>.gitslave</code>文件中记录所需子项目的信息，并在所有仓库中顺序执行相应Git操作的设计原理，注定其使用场景有一定局限性。</p>
+<ul>
+<li>GitSlave并不会记录所需子项目的版本，所以其永远只是追踪子项目的最新版本，无法满足父项目基于某一特定版本子项目的场景，而此种场景在开发中却是极为常见。</li>
+<li>GitSlave在父项目的<code>.gitslave</code>文件中记录相关子项目的信息，使得父项目本身的提交历史与子项目的增删历史相互交织在一起，一旦子项目增多，父项目的提交历史将变得混乱。</li>
+</ul>
+<h3 id="google-repo">Google Repo</h3>
+<p>到此，我们可以总结出，一个优秀的基于Git的多项目管理系统设计需要满足如下2点：</p>
+<ol>
+<li>记录子项目的远程地址、所需版本和对应的本地路径。</li>
+<li>这个记录文件应该单独维护，而不应该污染任何一个仓库，因为它与这些仓库本身毫无关系。</li>
+</ol>
+<p>Google Repo正是完美匹配这2个设计要点的Git多项目管理系统。</p>
+<p><a href="https://source.android.com/source/using-repo.html">Repo</a>是Google为了有效组织<a href="https://www.android.com">Android</a>的源代码而开发的一个基于Git的管理工具。<a href="https://source.android.com">Android开放源码项目（AOSP）</a>由几百个子项目组成（最新Android 7.0的源代码包含520多个子项目），每个子项目又有很多的分支版本，为了有效的管理这些子项目，需要一个自动化管理工具，Repo应运而生。</p>
+<p><a href="https://source.android.com/source/using-repo.html">Repo</a>工具实际上是由一系列<a href="https://www.python.org/">Python</a>脚本组成，这些Python脚本通过调用Git命令来完成自己的功能。比较有意思的是，组成Repo工具的那些Python脚本本身也是一个Git仓库。这个Git仓库被称为Repo仓库。我们每次执行Repo命令的时候，Repo仓库都会对自己进行一次更新。</p>
+<p>从之前的结论我们知道，一个优秀的基于Git的多项目管理系统会有一个单独的清单文件记录所有子项目的元信息（子项目的远程地址、所需版本和对应的本地路径）。在<a href="https://source.android.com/source/using-repo.html">Repo</a>管理系统中，这个清单文件单独存在于一个Git仓库，被称为Menifest仓库。Menifest仓库的版本对应着整个项目不同的版本。</p>
+<p>到目前为止，我们知道<a href="https://source.android.com/source/using-repo.html">Repo</a>管理系统中存在着3种类型的Git仓库，分别是Repo仓库、Manifest仓库以及所有子项目仓库。Repo仓库通过Menifest仓库可以获取所有子项目的元信息。有了这些元信息后，就可以通过Repo仓库里面的Python脚本来操作所有的子项目了。那么，Repo仓库和Manifest仓库又是怎么来的呢？答案是通过一个独立的Repo脚本来获取，这个Repo脚本位于<a href="https://source.android.com">AOSP（Android Open Source Project）</a>的官方网站上，我们可以通过HTTP协议来下载。</p>
+<p>我们以<a href="https://source.android.com">AOSP</a>项目为例说明Repo的用法。</p>
+<h4 id="安装repo">安装Repo</h4>
+<p>在你的用户主目录下创建bin目录，并且添加bin目录到的你的PATH中：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ mkdir ~/bin
+</span></span><span style="display:flex;"><span>$ PATH=~/bin:$PATH
+</span></span></code></pre></div><p>下载Repo脚本到bin目录，并确保它可执行：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-gdscript3" data-lang="gdscript3"><span style="display:flex;"><span><span style="color:#f92672">$</span> curl https:<span style="color:#f92672">//</span>storage<span style="color:#f92672">.</span>googleapis<span style="color:#f92672">.</span>com<span style="color:#f92672">/</span>git<span style="color:#f92672">-</span>repo<span style="color:#f92672">-</span>downloads<span style="color:#f92672">/</span>repo <span style="color:#f92672">&gt;</span> <span style="color:#f92672">~/</span>bin<span style="color:#f92672">/</span>repo
+</span></span><span style="display:flex;"><span><span style="color:#f92672">$</span> chmod a<span style="color:#f92672">+</span>x <span style="color:#f92672">~/</span>bin<span style="color:#f92672">/</span>repo
+</span></span></code></pre></div><p>查看Repo脚本的内容，我们可以看到Repo仓库的地址和版本。Repo脚本执行<code>init</code>命令时会从该地址下载Repo仓库并切换到指定的分支。以后执行其他Repo命令，Repo脚本都会自动更新Repo仓库。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ cat ~/bin/repo
+</span></span><span style="display:flex;"><span>#!/usr/bin/env python
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span># repo default configuration
+</span></span><span style="display:flex;"><span>#
+</span></span><span style="display:flex;"><span>import os
+</span></span><span style="display:flex;"><span>REPO_URL = os.environ.get(&#39;REPO_URL&#39;, None)
+</span></span><span style="display:flex;"><span>if not REPO_URL:
+</span></span><span style="display:flex;"><span>  REPO_URL = &#39;https://gerrit.googlesource.com/git-repo&#39;
+</span></span><span style="display:flex;"><span>REPO_REV = &#39;stable&#39;
+</span></span><span style="display:flex;"><span>...
+</span></span></code></pre></div><h4 id="初始化repo用户端">初始化Repo用户端</h4>
+<p>创建工作目录：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ mkdir android
+</span></span><span style="display:flex;"><span>$ cd android
+</span></span></code></pre></div><p>根据实际情况配置Git，该信息会将会出现在Git项目的提交信息中。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ git config --global user.name &#34;Feilong Wang“
+</span></span><span style="display:flex;"><span>$ git config --global user.email “i@feilongwang.org”
+</span></span></code></pre></div><p>运行<code>repo init -u url [options]</code>初始化Repo用户端。其中url指定Menifest仓库的地址。默认情况下，<code>repo init</code>会下载Repo仓库，切换到Repo脚本中<code>REPO_REV</code>指定的分支，并下载Menifest仓库，切换到master分支。你也通过加上<code>-b</code>参数来指定Manifest的分支或版本。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ repo init -u https://android.googlesource.com/platform/manifest
+</span></span></code></pre></div><p>或</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ repo init -u https://android.googlesource.com/platform/manifest -b android-4.0.1_r1
+</span></span></code></pre></div><p>Repo用户端初始化成功后，当前目录下将会有个<code>.repo</code>目录，里面包含Repo仓库和Manifest仓库。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ ls -al
+</span></span><span style="display:flex;"><span>total 0
+</span></span><span style="display:flex;"><span>drwxr-xr-x 3 wangfeilong staff 102 11 13 21:03 ./
+</span></span><span style="display:flex;"><span>drwxr-xr-x 8 wangfeilong staff 442 10  9 15:28 ../
+</span></span><span style="display:flex;"><span>drwxr-xr-x 3 wangfeilong staff 102 11 13 21:00 .repo/
+</span></span><span style="display:flex;"><span>$ cd .repo/
+</span></span><span style="display:flex;"><span>$ ls -al
+</span></span><span style="display:flex;"><span>total 44
+</span></span><span style="display:flex;"><span>drwxr-xr-x  7 wangfeilong staff   340  9 16 09:33 ./
+</span></span><span style="display:flex;"><span>drwxr-xr-x 29 wangfeilong staff  1224 10 20 10:51 ../
+</span></span><span style="display:flex;"><span>-rw-r--r--  1 wangfeilong staff 28439 10  8 16:58 .repo_fetchtimes.json
+</span></span><span style="display:flex;"><span>lrwxr-xr-x  1 wangfeilong staff    21  4  4  2016 manifest.xml -&gt; manifests/default.xml
+</span></span><span style="display:flex;"><span>drwxr-xr-x  3 wangfeilong staff   170 11  1 22:20 manifests/
+</span></span><span style="display:flex;"><span>drwxr-xr-x  9 wangfeilong staff   510  3 16  2016 manifests.git/
+</span></span><span style="display:flex;"><span>drwxr-xr-x  6 wangfeilong staff   204  3 16  2016 project-objects/
+</span></span><span style="display:flex;"><span>-rw-r--r--  1 wangfeilong staff 11105 10  8 16:58 project.list
+</span></span><span style="display:flex;"><span>drwxr-xr-x 28 wangfeilong staff   952  4  5  2016 projects/
+</span></span><span style="display:flex;"><span>drwxr-xr-x  7 wangfeilong staff  1700 10  8 16:58 repo/
+</span></span></code></pre></div><p>可以看到Manifest清单文件内容如下，<code>remote</code>标签指定了子项目仓库的地址前缀，<code>project</code>标签指定了子项目仓库的相对地址和本地路径，<code>revision</code>属性指定子项目的分支或版本。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ cat manifest.xml 
+</span></span><span style="display:flex;"><span>&lt;?xml version=&#34;1.0&#34; encoding=&#34;UTF-8&#34;?&gt;
+</span></span><span style="display:flex;"><span>&lt;manifest&gt;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  &lt;remote  name=&#34;aosp&#34;
+</span></span><span style="display:flex;"><span>           fetch=&#34;..&#34;
+</span></span><span style="display:flex;"><span>           review=&#34;https://android-review.googlesource.com/&#34; /&gt;
+</span></span><span style="display:flex;"><span>  &lt;default revision=&#34;master&#34;
+</span></span><span style="display:flex;"><span>           remote=&#34;aosp&#34;
+</span></span><span style="display:flex;"><span>           sync-j=&#34;4&#34; /&gt;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  &lt;project path=&#34;build&#34; name=&#34;platform/build&#34; groups=&#34;pdk&#34; &gt;
+</span></span><span style="display:flex;"><span>    &lt;copyfile src=&#34;core/root.mk&#34; dest=&#34;Makefile&#34; /&gt;
+</span></span><span style="display:flex;"><span>  &lt;/project&gt;
+</span></span><span style="display:flex;"><span>  &lt;project path=&#34;build/blueprint&#34; name=&#34;platform/build/blueprint&#34; groups=&#34;pdk,tradefed&#34; /&gt;
+</span></span><span style="display:flex;"><span>  &lt;project path=&#34;build/kati&#34; name=&#34;platform/build/kati&#34; groups=&#34;pdk,tradefed&#34; /&gt;
+</span></span><span style="display:flex;"><span>  &lt;project path=&#34;build/soong&#34; name=&#34;platform/build/soong&#34; groups=&#34;pdk,tradefed&#34; &gt;
+</span></span><span style="display:flex;"><span>    &lt;linkfile src=&#34;root.bp&#34; dest=&#34;Android.bp&#34; /&gt;
+</span></span><span style="display:flex;"><span>    &lt;linkfile src=&#34;bootstrap.bash&#34; dest=&#34;bootstrap.bash&#34; /&gt;
+</span></span><span style="display:flex;"><span>  &lt;/project&gt;
+</span></span><span style="display:flex;"><span>  &lt;project path=&#34;art&#34; name=&#34;platform/art&#34; groups=&#34;pdk&#34; /&gt;
+</span></span><span style="display:flex;"><span>  &lt;project path=&#34;bionic&#34; name=&#34;platform/bionic&#34; groups=&#34;pdk&#34; /&gt;
+</span></span><span style="display:flex;"><span>  &lt;project path=&#34;bootable/recovery&#34; name=&#34;platform/bootable/recovery&#34; groups=&#34;pdk&#34; /&gt;
+</span></span><span style="display:flex;"><span>...
+</span></span></code></pre></div><h4 id="下载所有子项目代码">下载所有子项目代码</h4>
+<p>现在，我们可以通过执行<code>repo sync</code>来下载所有项目的源代码了。以后如果服务端有更新，我们也可以通过此命令来获取更新。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>$ repo sync
+</span></span></code></pre></div><h4 id="提交项目-1">提交项目</h4>
+<p>由于Repo管理系统中每一个子项目都是单独的Git仓库，所以我们在某一个仓库进行开发时，完全可以使用原先单个Git仓库的开发方式，可以使用<code>git pull</code>，<code>git rebase</code>等命令。只是在同时操作多个子项目时，我们可以使用Repo分装好的批处理命令，如<code>repo start</code>在所有子项目中创建一个新的topic分支。更多Repo命令请运行<code>repo help</code>查看，在此不再赘述。</p>
+<hr>
+<p>参考</p>
+<ul>
+<li><a href="http://blog.devtang.com/2013/05/08/git-submodule-issues/">http://blog.devtang.com/2013/05/08/git-submodule-issues/</a></li>
+<li><a href="http://www.kafeitu.me/git/2012/03/27/git-submodule.html">http://www.kafeitu.me/git/2012/03/27/git-submodule.html</a></li>
+<li><a href="http://blog.chh.tw/posts/git-submodule/">http://blog.chh.tw/posts/git-submodule/</a></li>
+<li><a href="http://efe.baidu.com/blog/git-submodule-vs-git-subtree/">http://efe.baidu.com/blog/git-submodule-vs-git-subtree/</a></li>
+<li><a href="http://aoxuis.me/post/2013-08-06-git-subtree">http://aoxuis.me/post/2013-08-06-git-subtree</a></li>
+<li><a href="http://www.tuicool.com/articles/veaEBr">http://www.tuicool.com/articles/veaEBr</a></li>
+<li><a href="http://gitslave.sourceforge.net/">http://gitslave.sourceforge.net/</a></li>
+<li><a href="http://gitslave.sourceforge.net/tutorial-basic.html">http://gitslave.sourceforge.net/tutorial-basic.html</a></li>
+<li><a href="http://blog.csdn.net/luoshengyang/article/details/18195205">http://blog.csdn.net/luoshengyang/article/details/18195205</a></li>
+<li><a href="https://git.kernel.org/pub/scm/git/git.git/plain/contrib/subtree/git-subtree.txt">https://git.kernel.org/pub/scm/git/git.git/plain/contrib/subtree/git-subtree.txt</a></li>
+<li><a href="https://segmentfault.com/a/1190000003076028">https://segmentfault.com/a/1190000003076028</a></li>
+<li><a href="https://gist.github.com/kvnsmth/4688345">https://gist.github.com/kvnsmth/4688345</a></li>
+<li><a href="https://git-scm.com/book/zh/v2/Git-%E5%B7%A5%E5%85%B7-%E5%AD%90%E6%A8%A1%E5%9D%97">https://git-scm.com/book/zh/v2/Git-%E5%B7%A5%E5%85%B7-%E5%AD%90%E6%A8%A1%E5%9D%97</a></li>
+<li><a href="https://source.android.com/source/using-repo.html">https://source.android.com/source/using-repo.html</a></li>
+</ul>
+		</section>
+
+		<div class="post-tags">
+			
+			
+			<nav class="nav tags">
+				<ul class="tags">
+					
+					<li><a href="/tags/git">Git</a></li>
+					
+					<li><a href="/tags/%E9%A1%B9%E7%9B%AE">项目</a></li>
+					
+				</ul>
+			</nav>
+			
+			
+		</div>
+		</article>
+</main>
+<footer>
+  <div style="display:flex"><a class="soc" href="https://github.com/feil0n9wan9" rel="me" title="GitHub"><i data-feather="github"></i></a>
+    <a class="border"></a><a class="soc" href="https://www.jianshu.com/u/5215dba27120" rel="me" title="JianShu"><i data-feather="book"></i></a>
+    <a class="border"></a></div>
+  <div class="footer-info">
+    2023  © Feilong Wang |  <a
+      href="https://github.com/athul/archie">Archie Theme</a> | Built with <a href="https://gohugo.io">Hugo</a>
+  </div>
+</footer>
+
+
+<script>
+  feather.replace()
+</script></div>
+    </body>
+</html>

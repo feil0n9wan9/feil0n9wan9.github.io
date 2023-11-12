@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html><head lang="en">
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>Learning Gradle - 静静的扯淡</title><meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="Android Studio作为Android应用开发的官方IDE，默认使用Gradle作为构建工具，所以对于Android应用开发来说，Gradle是必须要掌握的工具。然而现实是，很多Android应用开发人员都不太了解Gradle，并且网上大部分关于Android Gradle的资料都是帮助解决某个具体的配置问题，缺乏系统深入的讲解。本文就来系统且深入的学习Gradle。
+Java构建工具的发展 Java构建工具最早出现的是Ant。Ant里的每一个任务（target）都可以互相依赖。Ant的最大缺点就是依赖的外部库也要添加到版本控制系统中，因为Ant没有一个机制来把这些外部库文件放在一个中央库里面，结果就是不断的拷贝和粘贴代码。
+随后Maven在2004年出现了，Maven引入了标准的项目和路径结构，还有依赖管理，不幸的是自定义的逻辑很难实现，唯一的方法就是引入插件。
+随后Ant通过Apache Ivy引入依赖管理来跟上Maven的脚步，Ant和Ivy集成实现了声明式的依赖，比如项目的编译和打包过程。
+Gradle的出现满足了很多现在构建工具的需求，Gradle提供了一个DSL（领域特定语言），一个约定优于配置的方法，还有更强大的依赖管理，Gradle使得我们可以抛弃XML的繁琐配置，引入动态语言Groovy来定义你的构建逻辑。
+Why Gradle Android Studio Project Site上对Android Studio为何选用Gradle作为构建工具描述如下：
+Gradle is an advanced build system as well as an advanced build toolkit allowing to create custom build logic through plugins. Here are some of its features that made us choose Gradle:
+Domain Specific Language (DSL) based on Groovy, used to describe and manipulate the build logic Build files are Groovy based and allow mixing of declarative elements through the DSL and using code to manipulate the DSL elements to provide custom logic." />
+	<meta property="og:image" content="https://raw.githubusercontent.com/feil0n9wan9/feil0n9wan9.github.io/master/images/about/me.jpg"/>
+	<meta property="og:title" content="Learning Gradle" />
+<meta property="og:description" content="Android Studio作为Android应用开发的官方IDE，默认使用Gradle作为构建工具，所以对于Android应用开发来说，Gradle是必须要掌握的工具。然而现实是，很多Android应用开发人员都不太了解Gradle，并且网上大部分关于Android Gradle的资料都是帮助解决某个具体的配置问题，缺乏系统深入的讲解。本文就来系统且深入的学习Gradle。
+Java构建工具的发展 Java构建工具最早出现的是Ant。Ant里的每一个任务（target）都可以互相依赖。Ant的最大缺点就是依赖的外部库也要添加到版本控制系统中，因为Ant没有一个机制来把这些外部库文件放在一个中央库里面，结果就是不断的拷贝和粘贴代码。
+随后Maven在2004年出现了，Maven引入了标准的项目和路径结构，还有依赖管理，不幸的是自定义的逻辑很难实现，唯一的方法就是引入插件。
+随后Ant通过Apache Ivy引入依赖管理来跟上Maven的脚步，Ant和Ivy集成实现了声明式的依赖，比如项目的编译和打包过程。
+Gradle的出现满足了很多现在构建工具的需求，Gradle提供了一个DSL（领域特定语言），一个约定优于配置的方法，还有更强大的依赖管理，Gradle使得我们可以抛弃XML的繁琐配置，引入动态语言Groovy来定义你的构建逻辑。
+Why Gradle Android Studio Project Site上对Android Studio为何选用Gradle作为构建工具描述如下：
+Gradle is an advanced build system as well as an advanced build toolkit allowing to create custom build logic through plugins. Here are some of its features that made us choose Gradle:
+Domain Specific Language (DSL) based on Groovy, used to describe and manipulate the build logic Build files are Groovy based and allow mixing of declarative elements through the DSL and using code to manipulate the DSL elements to provide custom logic." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://feil0n9wan9.github.io/posts/learning-gradle/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2016-07-23T22:40:29+00:00" />
+<meta property="article:modified_time" content="2016-07-23T22:40:29+00:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Learning Gradle"/>
+<meta name="twitter:description" content="Android Studio作为Android应用开发的官方IDE，默认使用Gradle作为构建工具，所以对于Android应用开发来说，Gradle是必须要掌握的工具。然而现实是，很多Android应用开发人员都不太了解Gradle，并且网上大部分关于Android Gradle的资料都是帮助解决某个具体的配置问题，缺乏系统深入的讲解。本文就来系统且深入的学习Gradle。
+Java构建工具的发展 Java构建工具最早出现的是Ant。Ant里的每一个任务（target）都可以互相依赖。Ant的最大缺点就是依赖的外部库也要添加到版本控制系统中，因为Ant没有一个机制来把这些外部库文件放在一个中央库里面，结果就是不断的拷贝和粘贴代码。
+随后Maven在2004年出现了，Maven引入了标准的项目和路径结构，还有依赖管理，不幸的是自定义的逻辑很难实现，唯一的方法就是引入插件。
+随后Ant通过Apache Ivy引入依赖管理来跟上Maven的脚步，Ant和Ivy集成实现了声明式的依赖，比如项目的编译和打包过程。
+Gradle的出现满足了很多现在构建工具的需求，Gradle提供了一个DSL（领域特定语言），一个约定优于配置的方法，还有更强大的依赖管理，Gradle使得我们可以抛弃XML的繁琐配置，引入动态语言Groovy来定义你的构建逻辑。
+Why Gradle Android Studio Project Site上对Android Studio为何选用Gradle作为构建工具描述如下：
+Gradle is an advanced build system as well as an advanced build toolkit allowing to create custom build logic through plugins. Here are some of its features that made us choose Gradle:
+Domain Specific Language (DSL) based on Groovy, used to describe and manipulate the build logic Build files are Groovy based and allow mixing of declarative elements through the DSL and using code to manipulate the DSL elements to provide custom logic."/>
+<script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+	<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@1,500&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Fira+Sans&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css?family=Roboto+Mono" rel="stylesheet">
+
+	
+	<link rel="stylesheet" type="text/css" media="screen" href="https://feil0n9wan9.github.io/css/main.ac08a4c9714baa859217f92f051deb58df2938ec352b506df655005dcaf98cc0.css" />
+		<link id="darkModeStyle" rel="stylesheet" type="text/css" href="https://feil0n9wan9.github.io/css/dark.726cd11ca6eb7c4f7d48eb420354f814e5c1b94281aaf8fd0511c1319f7f78a4.css"   />
+	
+
+	
+	
+
+	
+	
+	
+	
+</head>
+<body>
+        <div class="content"><header>
+	<div class="main">
+		<a href="https://feil0n9wan9.github.io">静静的扯淡</a>
+	</div>
+	<nav>
+		
+		<a href="/">Home</a>
+		
+		<a href="/posts">Posts</a>
+		
+		<a href="/tags">Tags</a>
+		
+		<a href="/about">About</a>
+		
+		
+	</nav>
+</header>
+
+<main>
+	<article>
+		<div class="title">
+			<h1 class="title">Learning Gradle</h1>
+			<div class="meta">Posted on Jul 23, 2016</div>
+		</div>
+		
+
+		<section class="body">
+			<p><a href="https://developer.android.com/studio/index.html">Android Studio</a>作为Android应用开发的官方IDE，默认使用<a href="https://www.gradle.org/">Gradle</a>作为构建工具，所以对于<a href="https://developer.android.com">Android应用开发</a>来说，Gradle是必须要掌握的工具。然而现实是，很多Android应用开发人员都不太了解Gradle，并且网上大部分关于<a href="https://developer.android.com/studio/releases/gradle-plugin.html">Android Gradle</a>的资料都是帮助解决某个具体的配置问题，缺乏系统深入的讲解。本文就来系统且深入的学习<a href="https://www.gradle.org/">Gradle</a>。</p>
+<!-- raw HTML omitted -->
+<h3 id="java构建工具的发展">Java构建工具的发展</h3>
+<p>Java构建工具最早出现的是<a href="http://ant.apache.org/">Ant</a>。Ant里的每一个任务（target）都可以互相依赖。Ant的最大缺点就是依赖的外部库也要添加到版本控制系统中，因为Ant没有一个机制来把这些外部库文件放在一个中央库里面，结果就是不断的拷贝和粘贴代码。</p>
+<p>随后<a href="https://maven.apache.org">Maven</a>在2004年出现了，Maven引入了标准的项目和路径结构，还有依赖管理，不幸的是自定义的逻辑很难实现，唯一的方法就是引入插件。</p>
+<p>随后Ant通过<a href="http://ant.apache.org/ivy/">Apache Ivy</a>引入依赖管理来跟上Maven的脚步，Ant和Ivy集成实现了声明式的依赖，比如项目的编译和打包过程。</p>
+<p><a href="https://www.gradle.org/">Gradle</a>的出现满足了很多现在构建工具的需求，Gradle提供了一个<a href="https://en.wikipedia.org/wiki/Domain-specific_language">DSL（领域特定语言）</a>，一个约定优于配置的方法，还有更强大的依赖管理，Gradle使得我们可以抛弃XML的繁琐配置，引入动态语言<a href="http://groovy-lang.org/">Groovy</a>来定义你的构建逻辑。</p>
+<h3 id="why-gradle">Why Gradle</h3>
+<p><a href="http://tools.android.com/">Android Studio Project Site</a>上对Android Studio为何选用Gradle作为构建工具描述如下：</p>
+<p>Gradle is an advanced build system as well as an advanced build toolkit allowing to create custom build logic through plugins. Here are some of its features that made us choose Gradle:</p>
+<ul>
+<li>Domain Specific Language (DSL) based on Groovy, used to describe and manipulate the build logic</li>
+<li>Build files are Groovy based and allow mixing of declarative elements through the DSL and using code to manipulate the DSL elements to provide custom logic.</li>
+<li>Built-in dependency management through Maven and/or Ivy.</li>
+<li>Very flexible. Allows using best practices but doesn’t force its own way of doing things.</li>
+<li>Plugins can expose their own DSL and their own API for build files to use.</li>
+<li>Good Tooling API allowing IDE integration.</li>
+</ul>
+<p>DSL，领域特定语言，指不像通用目的语言那样目标范围涵盖一切软件问题，而是专门针对某一特定问题的计算机语言，如init.rc，renderscript等。</p>
+<h3 id="理解groovy">理解Groovy</h3>
+<p>由于Gradle是基于<a href="http://groovy-lang.org/">Groovy</a>开发的，要深入理解Gradle，必须先了解Groovy。Groovy概括的说就是把写Java程序变得像写脚本一样简单，写完就可以执行，Groovy内部会将其编译成Java字节码，然后启动虚拟机来执行。Groovy是用于Java虚拟机，具有像<a href="https://www.python.org/">Python</a>，<a href="https://www.ruby-lang.org/">Ruby</a>和<a href="http://www.smalltalk.org/">Smalltalk</a>语言特性的敏捷的动态语言，使用该种语言不必编写过多的代码，同时又具有闭包和动态语言中的其他特性。Groovy使用方式基本与Java代码的使用方式相同，其设计时充分考虑了Java集成，这使Groovy与Java代码的互操作很容易。</p>
+<h4 id="groovy安装">Groovy安装</h4>
+<p>Mac上可以直接通过<a href="https://brew.sh/">Homebrew</a>安装Groovy，具体命令如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ brew install groovy
+</span></span></code></pre></div><p>安装完成后可通过如下命令查看：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ groovy -v
+</span></span><span style="display:flex;"><span>Groovy Version: 2.4.8 JVM: 1.8.0_45 Vendor: Oracle Corporation OS: Mac OS X
+</span></span></code></pre></div><h4 id="groovy基础语法">Groovy基础语法</h4>
+<ul>
+<li>可以不同分号结尾。</li>
+<li>支持动态类型，即定义变量时可以不指定其类型。</li>
+<li>可以使用关键字def定义变量和函数（Groovy推荐）（其实def会改变变量的作用域）。</li>
+<li>Groovy中的所有事物都是对象。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#66d9ef">var</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Hello Groovy&#34;</span>
+</span></span><span style="display:flex;"><span>println <span style="color:#66d9ef">var</span>
+</span></span><span style="display:flex;"><span>println <span style="color:#66d9ef">var</span><span style="color:#f92672">.</span><span style="color:#a6e22e">class</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">5</span>
+</span></span><span style="display:flex;"><span>println <span style="color:#66d9ef">var</span>
+</span></span><span style="display:flex;"><span>println <span style="color:#66d9ef">var</span><span style="color:#f92672">.</span><span style="color:#a6e22e">class</span>
+</span></span></code></pre></div><p>输出结果如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>Hello Groovy
+</span></span><span style="display:flex;"><span>class java.lang.String
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">5</span>
+</span></span><span style="display:flex;"><span>class java.lang.Integer
+</span></span></code></pre></div><ul>
+<li>单引号中的内容严格对应Java的String，不对$进行转义。</li>
+<li>双引号的内容如果有$则会对$表达式先求值（<a href="http://groovy-lang.org/api.html">GString</a>）。</li>
+<li>三引号可以指示一个多行的字符串，并可以在其中自由的使用单引号和双引号。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> name <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;Jerry&#39;</span>
+</span></span><span style="display:flex;"><span>println <span style="color:#e6db74">&#39;His name is $name&#39;</span>
+</span></span><span style="display:flex;"><span>println <span style="color:#e6db74">&#34;His name is $name&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> members <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#39;Terry&#39;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;Larry&#34; &#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>println <span style="color:#e6db74">&#34;Team member is: &#34;</span> <span style="color:#f92672">+</span> members
+</span></span></code></pre></div><p>输出结果如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>His name is $name
+</span></span><span style="display:flex;"><span>His name is Jerry
+</span></span><span style="display:flex;"><span>Team member is:
+</span></span><span style="display:flex;"><span>    &#39;Terry&#39;
+</span></span><span style="display:flex;"><span>    &#34;Larry&#34;
+</span></span></code></pre></div><ul>
+<li>函数定义时返回值和函数参数也可以不指定类型。</li>
+<li>未指定返回类型的函数定义必须使用def。</li>
+<li>可以不使用return xxx来设置函数返回值，函数最后一行代码的执行结果被设置成返回值，如果定义时指明了类型则必须返回正确的数据类型。</li>
+<li>函数调用可以不加括号，构造函数和无参函数除外。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">getValue</span><span style="color:#f92672">(</span>name<span style="color:#f92672">)</span> <span style="color:#f92672">{</span><span style="color:#75715e">// def is must
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    name <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;&#39;s value is 10&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>value <span style="color:#f92672">=</span> getValue <span style="color:#e6db74">&#34;Terry&#34;</span>
+</span></span><span style="display:flex;"><span>println value
+</span></span></code></pre></div><p>结果如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>Terry<span style="color:#960050;background-color:#1e0010">&#39;</span>s value is <span style="color:#ae81ff">10</span>
+</span></span></code></pre></div><ul>
+<li>Java原始数据类型在Groovy中为其对应的包装类型。</li>
+<li>类不支持default作用域，且默认作用域为public，如果需要public修饰符，则不用写它。</li>
+<li>自动提供足够使用的构造函数（一个无参和带一个Map参数的构造函数，足够）。</li>
+<li>Groovy动态的为每一个字段都会自动生成getter和setter，并且我们可以通过像访问字段本身一样调用getter和setter。</li>
+<li>Groovy所有的对象都有一个元类<code>metaClass</code>，我们可以通过metaClass属性访问该元类。通过元类，可以为这个对象增加属性和方法（在java中不可想象）！</li>
+<li>常用的集合类有<code>List</code>，<code>Map</code>，<code>Range</code>。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Person</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> id
+</span></span><span style="display:flex;"><span>    String name
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">setId</span><span style="color:#f92672">(</span>id<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        println <span style="color:#e6db74">&#34;setId($id)&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">id</span> <span style="color:#f92672">=</span> id
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    String <span style="color:#a6e22e">toString</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;id=$id, name=$name&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>merry <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Person<span style="color:#f92672">()</span>
+</span></span><span style="display:flex;"><span>merry<span style="color:#f92672">.</span><span style="color:#a6e22e">id</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>    <span style="color:#75715e">// call merry.setId(1)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>merry<span style="color:#f92672">.</span><span style="color:#a6e22e">setName</span> <span style="color:#e6db74">&#34;Merry&#34;</span>
+</span></span><span style="display:flex;"><span>println merry
+</span></span><span style="display:flex;"><span>println merry<span style="color:#f92672">.</span><span style="color:#a6e22e">getId</span><span style="color:#f92672">().</span><span style="color:#a6e22e">class</span>
+</span></span><span style="display:flex;"><span>jerry <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Person<span style="color:#f92672">(</span>id: <span style="color:#ae81ff">2</span><span style="color:#f92672">,</span> name: <span style="color:#e6db74">&#34;Jerry&#34;</span><span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>println jerry
+</span></span></code></pre></div><p>运行结果如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>setId<span style="color:#f92672">(</span>1<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>id<span style="color:#f92672">=</span>1, name<span style="color:#f92672">=</span>Merry
+</span></span><span style="display:flex;"><span>class java.lang.Integer
+</span></span><span style="display:flex;"><span>setId<span style="color:#f92672">(</span>2<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>id<span style="color:#f92672">=</span>2, name<span style="color:#f92672">=</span>Jerry
+</span></span></code></pre></div><p>下面的例子展示通过metaClass向String对象中动态添加属性和方法：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> msg <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Hello Groovy&#34;</span>
+</span></span><span style="display:flex;"><span>msg<span style="color:#f92672">.</span><span style="color:#a6e22e">metaClass</span><span style="color:#f92672">.</span><span style="color:#a6e22e">upper</span> <span style="color:#f92672">=</span> <span style="color:#f92672">{</span> delegate<span style="color:#f92672">.</span><span style="color:#a6e22e">toUpperCase</span><span style="color:#f92672">()</span> <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>msg<span style="color:#f92672">.</span><span style="color:#a6e22e">metaClass</span><span style="color:#f92672">.</span><span style="color:#a6e22e">lower</span> <span style="color:#f92672">=</span> msg<span style="color:#f92672">.</span><span style="color:#a6e22e">toLowerCase</span><span style="color:#f92672">()</span>
+</span></span><span style="display:flex;"><span>println msg<span style="color:#f92672">.</span><span style="color:#a6e22e">upper</span><span style="color:#f92672">()</span>
+</span></span><span style="display:flex;"><span>println msg<span style="color:#f92672">.</span><span style="color:#a6e22e">lower</span>
+</span></span></code></pre></div><p>运行结果如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>HELLO GROOVY
+</span></span><span style="display:flex;"><span>hello groovy
+</span></span></code></pre></div><h4 id="groovy动态性">Groovy动态性</h4>
+<p>Groovy动态性示例如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Dog</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">bark</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>       println <span style="color:#e6db74">&#39;woof!&#39;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">sit</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>       println <span style="color:#e6db74">&#39;sitting!&#39;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">jump</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>       println <span style="color:#e6db74">&#39;boing!&#39;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> dog <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Dog<span style="color:#f92672">()</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> acts <span style="color:#f92672">=</span> <span style="color:#f92672">[</span><span style="color:#e6db74">&#39;sit&#39;</span><span style="color:#f92672">,</span><span style="color:#e6db74">&#39;jump&#39;</span><span style="color:#f92672">,</span><span style="color:#e6db74">&#39;bark&#39;</span><span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span>acts<span style="color:#f92672">.</span><span style="color:#a6e22e">each</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    dog<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;${it}&#34;</span><span style="color:#f92672">()</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>运行结果如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>sitting!
+</span></span><span style="display:flex;"><span>boing!
+</span></span><span style="display:flex;"><span>woof!
+</span></span></code></pre></div><p>另一个动态性的例子：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">LightOn</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">doing</span><span style="color:#f92672">()</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>       println <span style="color:#e6db74">&#39;Ligth turning on...&#39;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">LightOff</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">doing</span><span style="color:#f92672">()</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>       println <span style="color:#e6db74">&#39;Ligth turning off...&#39;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Switch</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">control</span><span style="color:#f92672">(</span>action<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>       action<span style="color:#f92672">.</span><span style="color:#e6db74">&#34;doing&#34;</span><span style="color:#f92672">()</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> sh <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Switch<span style="color:#f92672">()</span>
+</span></span><span style="display:flex;"><span>sh<span style="color:#f92672">.</span><span style="color:#a6e22e">control</span><span style="color:#f92672">(</span><span style="color:#66d9ef">new</span> LightOn<span style="color:#f92672">())</span>
+</span></span></code></pre></div><p>运行结果如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>Ligth turning on...
+</span></span></code></pre></div><h4 id="groovy-list">Groovy List</h4>
+<ul>
+<li>List变量由<code>[]</code>定义，其元素可以是任意对象，底层对应Java的List接口。</li>
+<li>直接通过索引存取，而且不用担心索引越界，当索引超过当前列表长度，List自动往该索引添加元素。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span>tmp <span style="color:#f92672">=</span> <span style="color:#f92672">[</span><span style="color:#e6db74">&#34;Jerry&#34;</span><span style="color:#f92672">,</span> <span style="color:#ae81ff">19</span> <span style="color:#f92672">,</span> <span style="color:#66d9ef">true</span><span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span>println <span style="color:#e6db74">&#34;tmp[1] = &#34;</span> <span style="color:#f92672">+</span> tmp<span style="color:#f92672">[</span><span style="color:#ae81ff">1</span><span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span>println tmp<span style="color:#f92672">[</span><span style="color:#ae81ff">5</span><span style="color:#f92672">]</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span>
+</span></span><span style="display:flex;"><span>tmp<span style="color:#f92672">[</span><span style="color:#ae81ff">10</span><span style="color:#f92672">]</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">3.14</span>
+</span></span><span style="display:flex;"><span>println <span style="color:#e6db74">&#34;The size is &#34;</span> <span style="color:#f92672">+</span> tmp<span style="color:#f92672">.</span><span style="color:#a6e22e">size</span>
+</span></span><span style="display:flex;"><span>println tmp
+</span></span></code></pre></div><p>运行结果如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>tmp<span style="color:#f92672">[</span>1<span style="color:#f92672">]</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">19</span>
+</span></span><span style="display:flex;"><span>true
+</span></span><span style="display:flex;"><span>The size is <span style="color:#ae81ff">11</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>Jerry, 19, true, null, null, null, null, null, null, null, 3.14<span style="color:#f92672">]</span>
+</span></span></code></pre></div><h4 id="groovy-map">Groovy Map</h4>
+<ul>
+<li>Map变量由<code>[:]</code>定义，冒号左边是key，右边是value，key必须是字符串，value可以是任何对象。另外key可以用引号包起来，也可以不用。</li>
+<li>Map中元素的存取支持多种方法。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> score <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;mark&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// id and name are treated as String
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// &#34;$score&#34; is also correct
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>tmp <span style="color:#f92672">=</span> <span style="color:#f92672">[</span>id: <span style="color:#ae81ff">1</span><span style="color:#f92672">,</span> name: <span style="color:#e6db74">&#34;Jerry&#34;</span><span style="color:#f92672">,</span> <span style="color:#f92672">(</span>score<span style="color:#f92672">):</span> <span style="color:#ae81ff">92</span><span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span>println tmp
+</span></span><span style="display:flex;"><span>println <span style="color:#e6db74">&#34;id: &#34;</span> <span style="color:#f92672">+</span> tmp<span style="color:#f92672">.</span><span style="color:#a6e22e">id</span>
+</span></span><span style="display:flex;"><span>println <span style="color:#e6db74">&#34;name: &#34;</span> <span style="color:#f92672">+</span> tmp<span style="color:#f92672">[</span><span style="color:#e6db74">&#34;name&#34;</span><span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span>tmp<span style="color:#f92672">.</span><span style="color:#a6e22e">height</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">183</span>
+</span></span><span style="display:flex;"><span>println <span style="color:#e6db74">&#34;height: &#34;</span> <span style="color:#f92672">+</span> tmp<span style="color:#f92672">.</span><span style="color:#a6e22e">height</span>
+</span></span></code></pre></div><p>运行结果如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#f92672">[</span>id:1, name:Jerry, mark:92<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span>id: <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>name: Jerry
+</span></span><span style="display:flex;"><span>height: <span style="color:#ae81ff">183</span>
+</span></span></code></pre></div><h4 id="groovy-range">Groovy Range</h4>
+<ul>
+<li>Range是Groovy对<code>List</code>的扩展，由begin值 + .. + end值定义。</li>
+<li>不包含end值时使用&lt;。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span>tmp <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span><span style="color:#f92672">..</span><span style="color:#ae81ff">5</span>
+</span></span><span style="display:flex;"><span>println tmp
+</span></span><span style="display:flex;"><span>println tmp<span style="color:#f92672">.</span><span style="color:#a6e22e">from</span>
+</span></span><span style="display:flex;"><span>println tmp<span style="color:#f92672">.</span><span style="color:#a6e22e">to</span>
+</span></span><span style="display:flex;"><span>tmpWithoutEnd <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span><span style="color:#f92672">..&lt;</span><span style="color:#ae81ff">5</span>
+</span></span><span style="display:flex;"><span>println tmpWithoutEnd<span style="color:#f92672">.</span><span style="color:#a6e22e">step</span><span style="color:#f92672">(</span><span style="color:#ae81ff">2</span><span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>println <span style="color:#e6db74">&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>println <span style="color:#e6db74">&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>println tmpWithoutEnd
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>tmp <span style="color:#f92672">=</span> <span style="color:#ae81ff">1.0f</span><span style="color:#f92672">..</span><span style="color:#ae81ff">5.0f</span>
+</span></span><span style="display:flex;"><span>println tmp
+</span></span></code></pre></div><p>运行结果如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#f92672">[</span>1, 2, 3, 4, 5<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">5</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>1, 3<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>1, 2, 3, 4<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>1.0, 2.0, 3.0, 4.0, 5.0<span style="color:#f92672">]</span>
+</span></span></code></pre></div><h4 id="groovy文档">Groovy文档</h4>
+<ul>
+<li>Groovy的API文档位于http://www.groovy-lang.org/api.html。</li>
+<li>以Range为例，从getter方法我们知道Range有<code>from</code>和<code>to</code>属性，尽管文档中并没有说明。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>T	getFrom()
+</span></span><span style="display:flex;"><span>The lower value in the range.
+</span></span><span style="display:flex;"><span>T	getTo()
+</span></span><span style="display:flex;"><span>The upper value in the range.
+</span></span></code></pre></div><h4 id="groovy闭包">Groovy闭包</h4>
+<ul>
+<li>英文叫<a href="http://groovy-lang.org/api.html">Closure</a>，是Groovy中非常重要的一个数据类型或者说一种概念了。</li>
+<li>闭包，是一种数据类型，它代表了一段可执行代码或方法指针。定义格式为：
+<ul>
+<li><code>def 闭包对象 = { parameters -&gt; code }</code></li>
+<li><code>def 闭包对象 = { code }</code> // 参数个数少于2个时可以省略-&gt;符号</li>
+<li>`def 闭包对象 = reference.&amp;methodName</li>
+</ul>
+</li>
+<li>闭包的调用方式：
+<ul>
+<li><code>闭包对象.call(参数)</code></li>
+<li><code>闭包对象(参数)</code></li>
+</ul>
+</li>
+<li>闭包只有一个参数时，可省略书写参数，在闭包内使用it变量引用参数。</li>
+<li>闭包可以作为函数返回值，函数参数，可以引用闭包外部定义的变量，可以实现接口方法。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> person <span style="color:#f92672">=</span> <span style="color:#f92672">{</span> id<span style="color:#f92672">,</span> name <span style="color:#f92672">-&gt;</span>
+</span></span><span style="display:flex;"><span>    println <span style="color:#e6db74">&#34;id=$id, name=$name&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>person<span style="color:#f92672">(</span><span style="color:#ae81ff">1</span><span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;Jerry&#34;</span><span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>person<span style="color:#f92672">.</span><span style="color:#a6e22e">call</span><span style="color:#f92672">(</span><span style="color:#ae81ff">2</span><span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;Larry&#34;</span><span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>person <span style="color:#ae81ff">3</span><span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;Merry&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Closure resume <span style="color:#f92672">=</span> <span style="color:#f92672">{</span> <span style="color:#e6db74">&#34;resume&#34;</span> <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>println <span style="color:#a6e22e">resume</span><span style="color:#f92672">()</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> hello <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Hello&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> length <span style="color:#f92672">=</span> hello<span style="color:#f92672">.&amp;</span>length
+</span></span><span style="display:flex;"><span>println <span style="color:#e6db74">&#34;The length is &#34;</span> <span style="color:#f92672">+</span> length<span style="color:#f92672">()</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> greeting <span style="color:#f92672">=</span> <span style="color:#f92672">{</span> <span style="color:#e6db74">&#34;$hello, $it&#34;</span> <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// equals: greeting = { it -&gt; &#34;Hello, $it&#34; }
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>println <span style="color:#a6e22e">greeting</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#39;Groovy&#39;</span><span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> exit <span style="color:#f92672">=</span> <span style="color:#f92672">{</span> <span style="color:#f92672">-&gt;</span> <span style="color:#e6db74">&#34;exit&#34;</span> <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// exit(1) &lt;= wrong!!
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> members <span style="color:#f92672">=</span> <span style="color:#f92672">[</span><span style="color:#e6db74">&#34;Jerry&#34;</span><span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;Larry&#34;</span><span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;Merry&#34;</span><span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span>members<span style="color:#f92672">.</span><span style="color:#a6e22e">each</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    println <span style="color:#e6db74">&#34;Hello $it&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">welcome</span><span style="color:#f92672">(</span>name<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        println <span style="color:#e6db74">&#34;Welcome $name&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>println <span style="color:#a6e22e">welcome</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;Terry&#34;</span><span style="color:#f92672">)</span>
+</span></span></code></pre></div><p>运行结果如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>id<span style="color:#f92672">=</span>1, name<span style="color:#f92672">=</span>Jerry
+</span></span><span style="display:flex;"><span>id<span style="color:#f92672">=</span>2, name<span style="color:#f92672">=</span>Larry
+</span></span><span style="display:flex;"><span>id<span style="color:#f92672">=</span>3, name<span style="color:#f92672">=</span>Merry
+</span></span><span style="display:flex;"><span>resume
+</span></span><span style="display:flex;"><span>The length is <span style="color:#ae81ff">5</span>
+</span></span><span style="display:flex;"><span>Hello, Groovy
+</span></span><span style="display:flex;"><span>Hello Jerry
+</span></span><span style="display:flex;"><span>Hello Larry
+</span></span><span style="display:flex;"><span>Hello Merry
+</span></span><span style="display:flex;"><span>closure$_welcome_closure6@73a1e9a9
+</span></span></code></pre></div><p>如何确定闭包的参数？<code>查看API文档。</code></p>
+<h4 id="groovy-dsl">Groovy DSL</h4>
+<ul>
+<li><code>Command Chain</code>: 链式调用既可以省略圆括号，又可以省略”.”号。</li>
+<li>闭包作为函数调用的最后一个参数时，可以拿到圆括号外面。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span><span style="color:#75715e">// equivalent to: turn(left).then(right)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>turn left then right
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// equivalent to: take(2.pills).of(chloroquinine).after(6.hours)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>take <span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#a6e22e">pills</span> of chloroquinine after <span style="color:#ae81ff">6</span><span style="color:#f92672">.</span><span style="color:#a6e22e">hours</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// equivalent to: paint(wall).with(red, green).and(yellow)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>paint wall with red<span style="color:#f92672">,</span> green and yellow
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// with named parameters too
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// equivalent to: check(that: margarita).tastes(good)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>check that: margarita tastes good
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// with closures as parameters
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// equivalent to: given({}).when({}).then({})
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>given <span style="color:#f92672">{</span> <span style="color:#f92672">}</span> when <span style="color:#f92672">{</span> <span style="color:#f92672">}</span> then <span style="color:#f92672">{</span> <span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>一个例子：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">name</span><span style="color:#f92672">(</span>name<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    println <span style="color:#e6db74">&#34;name: $name&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">this</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">age</span><span style="color:#f92672">(</span>age<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    println <span style="color:#e6db74">&#34;age: $age&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">this</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">action</span><span style="color:#f92672">(</span>String tips<span style="color:#f92672">,</span> Closure c<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    println <span style="color:#e6db74">&#34;begin to $tips&#34;</span>
+</span></span><span style="display:flex;"><span>    c<span style="color:#f92672">()</span>
+</span></span><span style="display:flex;"><span>    println <span style="color:#e6db74">&#34;end&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">this</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>name <span style="color:#e6db74">&#34;Jerry&#34;</span> age <span style="color:#ae81ff">18</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// name(&#34;Jerry&#34;).age(18)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>name <span style="color:#e6db74">&#34;Herry&#34;</span>
+</span></span><span style="display:flex;"><span>age <span style="color:#ae81ff">22</span>
+</span></span><span style="display:flex;"><span>action<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;eat&#34;</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    println <span style="color:#e6db74">&#34;eating...&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>运行结果如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>name: Jerry
+</span></span><span style="display:flex;"><span>age: <span style="color:#ae81ff">18</span>
+</span></span><span style="display:flex;"><span>name: Herry
+</span></span><span style="display:flex;"><span>age: <span style="color:#ae81ff">22</span>
+</span></span><span style="display:flex;"><span>begin to eat
+</span></span><span style="display:flex;"><span>eating...
+</span></span><span style="display:flex;"><span>end
+</span></span></code></pre></div><h4 id="groovy脚本">Groovy脚本</h4>
+<p>Groovy脚本是什么？我们通过一个例子来看一下。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span><span style="color:#75715e">// variables.groovy
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> x <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span> <span style="color:#75715e">// or int x = 1
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">printx</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    println x
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>printx<span style="color:#f92672">()</span> <span style="color:#75715e">// failed
+</span></span></span></code></pre></div><p>运行结果如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>Caught: groovy.lang.MissingPropertyException: No such property: x <span style="color:#66d9ef">for</span> class: variables
+</span></span><span style="display:flex;"><span>groovy.lang.MissingPropertyException: No such property: x <span style="color:#66d9ef">for</span> class: variables
+</span></span><span style="display:flex;"><span>	at variables.printx<span style="color:#f92672">(</span>variables.groovy:5<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>	at variables.run<span style="color:#f92672">(</span>variables.groovy:8<span style="color:#f92672">)</span>
+</span></span></code></pre></div><p>为何会出现找不到属性<code>x</code>？我们来看看反编译groovy运行时生成的<code>.class</code>文件。使用如下命令在<code>-d</code>指定的目录生成<code>.class</code>文件，然后使用JD-GUI查看：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>groovyc –d classes variables.groovy
+</span></span></code></pre></div><p><img src="/images/learning-gradle/variables-class.png" alt="variables.class">
+可以看到：</p>
+<ul>
+<li>XXX.groovy被转换成XXX类，它从<code>Script</code>类派生。</li>
+<li>每一个脚本都会生成一个<code>static main</code>函数。这样，当我们groovy XXX.groovy的时候，其实就是用调用虚拟机去执行这个<code>main</code>函数。</li>
+<li>如果脚本定义了函数，则函数会被定义在XXX类中。</li>
+<li>脚本中的其他代码都会放到<code>run</code>函数中。</li>
+</ul>
+<p>所以变量<code>x</code>是在是在<code>run</code>函数中定义的局部变量，当然无法在<code>printx()</code>函数的访问。那要如何才能实现<code>printx()</code>函数访问变量<code>x</code>呢？有两种方式可以实现。
+第一种方式：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span>x <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span> <span style="color:#75715e">// replace def x = 1 or int x = 1
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">printx</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    println x
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>printx<span style="color:#f92672">()</span>
+</span></span></code></pre></div><p>对应的<code>.class</code>文件反编译代码：
+<img src="/images/learning-gradle/variables-class-x.png" alt="">
+另一种方式：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span><span style="color:#f92672">import</span> groovy.transform.Field<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@Field</span> x <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span> <span style="color:#75715e">// &lt;= def x = 1 or int x = 1
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">printx</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    println x
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>printx<span style="color:#f92672">()</span>
+</span></span></code></pre></div><p>对应的<code>.class</code>文件反编译代码：
+<img src="/images/learning-gradle/variables-class-field.png" alt=""></p>
+<h3 id="gradle介绍">Gradle介绍</h3>
+<p>Gradle被认为是Java世界构建工具的一次飞跃，它提供：</p>
+<ul>
+<li>一个非常灵活通用的构建工具。</li>
+<li>对多项目构建提供强大支持。</li>
+<li>强大的依赖管理机制。</li>
+<li>完美支持已有的Maven和Ivy仓库。</li>
+<li>支持依赖传递管理。</li>
+<li>脚本编写基于Groovy。</li>
+<li>丰富的描述构建的领域模型。</li>
+</ul>
+<p>更多Gradle特性概述，可以访问<a href="https://docs.gradle.org/3.4.1/userguide/overview.html">Gradle概述</a>。</p>
+<h3 id="why-groovy">Why Groovy</h3>
+<p><a href="https://gradle.org/">Gradle</a>官方网站上对为何选用Groovy来开发的原因描述如下：</p>
+<p>We think the advantages of an internal DSL (based on a dynamic language) over XML are tremendous when used in build scripts. There are a couple of dynamic languages out there. Why Groovy? The answer lies in the context Gradle is operating in. Although Gradle is a general purpose build tool at its core, its main focus are Java projects. In such projects the team members will be very familiar with Java. We think a build should be as transparent as possible to all team members.</p>
+<p>In that case, you might argue why we don&rsquo;t just use Java as the language for build scripts. We think this is a valid question. It would have the highest transparency for your team and the lowest learning curve, but because of the limitations of Java, such a build language would not be as nice, expressive and powerful as it could be. [1] Languages like Python, Groovy or Ruby do a much better job here. We have chosen Groovy as it offers by far the greatest transparency for Java people. Its base syntax is the same as Java&rsquo;s as well as its type system, its package structure and other things. Groovy provides much more on top of that, but with the common foundation of Java.</p>
+<p>For Java developers with Python or Ruby knowledge or the desire to learn them, the above arguments don&rsquo;t apply. The Gradle design is well-suited for creating another build script engine in JRuby or Jython. It just doesn&rsquo;t have the highest priority for us at the moment. We happily support any community effort to create additional build script engines.</p>
+<h3 id="gradle基本概念">Gradle基本概念</h3>
+<p>Gradle脚本是配置脚本，脚本执行时会配置特定的对象，这些对象被称为脚本的<code>delegate</code>对象。脚本中可以使用<code>delegate</code>对象的属性和方法。所有的Gradle脚本实现了<a href="https://docs.gradle.org/3.4.1/javadoc/">org.gradle.api.Script</a>接口，所以脚本中可以直接使用Script接口定义的属性和方法，Script接口中找不到的属性或方法将被转交给<code>delegate</code>对象。同时，Gradle脚本也是Groovy脚本，同样可以包含Groovy脚本允许的元素，方法、类定义等。
+<img src="/images/learning-gradle/gradle-delegates.png" alt="gradle-delegates"></p>
+<h3 id="gradle生命周期">Gradle生命周期</h3>
+<p>Gradle执行构建时有它自己的生命周期，概括来说可以分为3个阶段：
+第一是初始化阶段。初始化阶段Gradle会创建一个<a href="https://docs.gradle.org/3.4.1/dsl/org.gradle.api.invocation.Gradle.html">Gradle</a>对象、<a href="https://docs.gradle.org/3.4.1/dsl/org.gradle.api.initialization.Settings.html">Settings</a>对象和<a href="https://docs.gradle.org/3.4.1/dsl/org.gradle.api.Project.html">Root Project</a>对象，然后在项目根目录寻找并执行<code>settings.gradle</code>文件来配置<a href="https://docs.gradle.org/3.4.1/dsl/org.gradle.api.initialization.Settings.html">Settings</a>对象，并生成项目的<a href="https://docs.gradle.org/3.4.1/dsl/org.gradle.api.Project.html">Project</a>树。</p>
+<p>第二是配置阶段。配置阶段Gradle会执行特定的构建脚本，默认是各<a href="https://docs.gradle.org/3.4.1/dsl/org.gradle.api.Project.html">Project</a>目录下名为<code>build.gradle</code>的文件，以配置对应的<a href="https://docs.gradle.org/3.4.1/dsl/org.gradle.api.Project.html">Project</a>。配置阶段结束时，Gradle内部会生成整个项目的有向无循环<a href="https://docs.gradle.org/3.4.1/dsl/org.gradle.api.Task.html">Task</a>图。</p>
+<p>第三是执行阶段。执行阶段Gradle依据命令行传入的<code>task</code>名字在<a href="https://docs.gradle.org/3.4.1/dsl/org.gradle.api.Task.html">Task</a>图中找出此<code>task</code>的所有依赖链，并从各依赖链起点开始，沿着依赖链依次执行<a href="https://docs.gradle.org/3.4.1/dsl/org.gradle.api.Task.html">Task</a>，最终得到编译产物。
+<img src="/images/learning-gradle/gradle-build-phases.png" alt="gradle-build-phasesM"></p>
+<p>Gradle用户手册中关于Gradle生命周期的描述如下：
+<img src="/images/learning-gradle/gradle-lifecycle.png" alt="gradle-lifecycle"></p>
+<p>Gradle生命周期的例子如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span><span style="color:#75715e">// settings.gradle
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>println <span style="color:#e6db74">&#39;This is executed during the initialization phase.&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// build.gradle in root directory
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>println <span style="color:#e6db74">&#39;This is executed during the configuration phase.&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>task configured <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    println <span style="color:#e6db74">&#39;This is also executed during the configuration phase.&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>task test <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    doLast <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        println <span style="color:#e6db74">&#39;This is executed during the execution phase.&#39;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>task testBoth <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    doFirst <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>      println <span style="color:#e6db74">&#39;This is executed first during the execution phase.&#39;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>    doLast <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>      println <span style="color:#e6db74">&#39;This is executed last during the execution phase.&#39;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>    println <span style="color:#e6db74">&#39;This is executed during the configuration phase as well.&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>执行结果如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>This is executed during the initialization phase.
+</span></span><span style="display:flex;"><span>This is executed during the configuration phase.
+</span></span><span style="display:flex;"><span>This is also executed during the configuration phase.
+</span></span><span style="display:flex;"><span>This is executed during the configuration phase as well.
+</span></span></code></pre></div><h4 id="gradle生命周期hook">Gradle生命周期Hook</h4>
+<p>Gradle提供了丰富的Hook机制以获知Gradle生命周期各个阶段各类事件的发生。常用的Hook可以通过<a href="https://docs.gradle.org/3.4.1/dsl/org.gradle.api.initialization.Settings.html">Settings</a>对象，<a href="https://docs.gradle.org/3.4.1/dsl/org.gradle.api.Project.html">Project</a>或<a href="https://docs.gradle.org/3.4.1/dsl/org.gradle.api.Task.html">Task</a>对象来设置，设置方式包括配置闭包方式和设置监听器方式。
+<img src="/images/learning-gradle/gradle-lifecycle-phases-hook.png" alt="gradle-lifecycle-phases-hook"></p>
+<p>以项目评估结束事件为例说明：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span><span style="color:#75715e">// build.gradle in root directory
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>afterEvaluate <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    println <span style="color:#e6db74">&#34;Project $name has been evaluated.&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>gradle<span style="color:#f92672">.</span><span style="color:#a6e22e">afterProject</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    println <span style="color:#e6db74">&#34;Project $it.name is evaluated.&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>gradle<span style="color:#f92672">.</span><span style="color:#a6e22e">addProjectEvaluationListener</span><span style="color:#f92672">(</span><span style="color:#66d9ef">new</span> ProjectEvaluationListener<span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">afterEvaluate</span><span style="color:#f92672">(</span>Project project<span style="color:#f92672">,</span> ProjectState state<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        println <span style="color:#e6db74">&#34;Project $project.name was evaluated.&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">beforeEvaluate</span><span style="color:#f92672">(</span>Project project<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">})</span>
+</span></span></code></pre></div><p>执行结果如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>Project tutorial was evaluated.
+</span></span><span style="display:flex;"><span>Project tutorial is evaluated.
+</span></span><span style="display:flex;"><span>Project tutorial has been evaluated.
+</span></span></code></pre></div><h3 id="gradle核心组件">Gradle核心组件</h3>
+<p>Gradle的核心组件包括<a href="https://docs.gradle.org/3.4.1/dsl/org.gradle.api.invocation.Gradle.html">Gradle</a>，<a href="https://docs.gradle.org/3.4.1/dsl/org.gradle.api.initialization.Settings.html">Settings</a>，<a href="https://docs.gradle.org/3.4.1/dsl/org.gradle.api.Project.html">Project</a>，<a href="https://docs.gradle.org/3.4.1/dsl/org.gradle.api.Task.html">Task</a>，<a href="https://docs.gradle.org/3.4.1/userguide/dependency_management.html">Dependency</a>，<a href="https://docs.gradle.org/3.4.1/userguide/plugins.html">Plugin</a>等，每个核心组件都对应很多有用的属性、方法和脚本块。</p>
+<h4 id="gradle组件">Gradle组件</h4>
+<p><a href="https://docs.gradle.org/3.4.1/dsl/org.gradle.api.invocation.Gradle.html">Gradle</a>组件代表了一次Gradle构建，通过Gradle组件能够获取（或设置）本次构建的一些全局信息，包括<a href="https://docs.gradle.org/3.4.1/dsl/org.gradle.api.invocation.Gradle.html#org.gradle.api.invocation.Gradle:gradleVersion">gradleVersion</a>，<a href="https://docs.gradle.org/3.4.1/dsl/org.gradle.api.invocation.Gradle.html#org.gradle.api.invocation.Gradle:taskGraph">taskGraph</a>，所有用到的<a href="https://docs.gradle.org/3.4.1/dsl/org.gradle.api.invocation.Gradle.html#org.gradle.api.invocation.Gradle:plugins">plugins</a>及添加各种Hook等。</p>
+<h4 id="settings组件">Settings组件</h4>
+<p><a href="https://docs.gradle.org/3.4.1/dsl/org.gradle.api.initialization.Settings.html">Settings</a>实例与<code>settings.gradle</code>文件存在一一对应关系，Gradle执行时会使用<code>settings.gradle</code>来配置对应的Settings实例。通常，在<code>settings.gradle</code>脚本中会通过<a href="https://docs.gradle.org/3.4.1/dsl/org.gradle.api.initialization.Settings.html">include(String[])</a>方法来添加对多项目的支持。<code>Root Project</code>会在Settings对象被创建时自动添加。另外，Settings组件还支持动态属性，除了对象接口本身的属性，还包含如下可用的属性：</p>
+<ul>
+<li>与<code>setting.gradle</code>同级的<code>gradle.properites</code>文件定义的属性。</li>
+<li>用户Gradle目录里<code>gradle.properties</code>定义的属性。</li>
+<li>通过命令行-P参数定义的属性。</li>
+</ul>
+<p>示例如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span><span style="color:#75715e">// gradle.properties in project root directory
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>componentized<span style="color:#f92672">=</span><span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// settings.gradle
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>componentized<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    include <span style="color:#e6db74">&#39;:components&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>执行结果如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>Project tutorial was evaluated.
+</span></span><span style="display:flex;"><span>Project tutorial is evaluated.
+</span></span><span style="display:flex;"><span>Project tutorial has been evaluated.
+</span></span><span style="display:flex;"><span>Project components was evaluated.
+</span></span><span style="display:flex;"><span>Project components is evaluated.
+</span></span></code></pre></div><h4 id="project组件">Project组件</h4>
+<p><a href="https://docs.gradle.org/3.4.1/dsl/org.gradle.api.Project.html">Project</a>组件是编译脚本与Gradle交互的主API接口，通过Project接口能访问Gradle所有功能。Gradle运行时使用<code>build.gradle</code>配置对应的project对象。一个Project本质上一些列<a href="https://docs.gradle.org/3.4.1/dsl/org.gradle.api.Task.html">Task</a>的集合，每一个<a href="https://docs.gradle.org/3.4.1/dsl/org.gradle.api.Task.html">Task</a>执行一定的任务（类编译，生成javadoc等）。Project配置通常包括仓库，依赖，产物，分组配置，插件的管理。所有Project将都将被加入到Project层次树中，Project全路径是其在层次树中的唯一标识。Project配置还可以引入插件，插件可以使得Project配置更加模块化，并可重用。Project组件还支持5大范围的动态属性和5大范围的动态方法。</p>
+<p>5大范围动态属性
+<img src="/images/learning-gradle/project-5-property-scopes.png" alt="project-5-property-scopes"></p>
+<p>5大范围动态方法
+<img src="/images/learning-gradle/project-5-method-scopes.png" alt="project-5-method-scopes"></p>
+<p>Ext属性示例：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span><span style="color:#75715e">// build.gradle in root directory
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>ext <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    gradleVersion <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;3.4&#34;</span>
+</span></span><span style="display:flex;"><span>    isSnapshot <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>ext<span style="color:#f92672">.</span><span style="color:#a6e22e">javaVersion</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;1.7&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>task <span style="color:#a6e22e">addProperty</span><span style="color:#f92672">(</span>dependsOn: clean<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    project<span style="color:#f92672">.</span><span style="color:#a6e22e">ext</span><span style="color:#f92672">.</span><span style="color:#a6e22e">prop3</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>isSnapshot<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    println <span style="color:#e6db74">&#34;GradleVersion: $gradleVersion&#34;</span>
+</span></span><span style="display:flex;"><span>    println <span style="color:#e6db74">&#34;JavaVersion: $javaVersion&#34;</span>
+</span></span><span style="display:flex;"><span>    println <span style="color:#e6db74">&#34;Prop3: ${prop3}&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// build.gradle in components directory
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>println <span style="color:#e6db74">&#34;GradleVersion in components: $gradleVersion&#34;</span>
+</span></span><span style="display:flex;"><span>println <span style="color:#e6db74">&#34;JavaVersion in components: ${rootProject.ext.javaVersion}&#34;</span>
+</span></span></code></pre></div><p>执行结果如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>GradleVersion: 3.4
+</span></span><span style="display:flex;"><span>JavaVersion: 1.7
+</span></span><span style="display:flex;"><span>Prop3: true
+</span></span><span style="display:flex;"><span>GradleVersion in components: 3.4
+</span></span><span style="display:flex;"><span>JavaVersion in components: 1.7
+</span></span></code></pre></div><h4 id="依赖管理">依赖管理</h4>
+<p>Gradle的<a href="https://docs.gradle.org/3.4.1/userguide/dependency_management.html">依赖管理</a>主要包括2大块：</p>
+<ul>
+<li>解决依赖。依赖指使得项目能够正常编译或运行的输入组件。
+<ul>
+<li>依赖配置：包括项目内依赖和外部依赖，并以配置分组。</li>
+<li>仓库配置：Gradle会在配置的仓库地址查找外部依赖。</li>
+</ul>
+</li>
+<li>发布产物。产物指项目编译生成的或需要上传到中心的仓库的输出产物。
+<ul>
+<li>配置发布仓库。通常插件会定义好项目的产物，我们不必关心，但必须告诉Gradle将产物发布到何处，<a href="https://search.maven.org/">MavenCentral</a>，Ivy仓库，<a href="https://bintray.com/bintray/jcenter">JCenter</a>等。</li>
+</ul>
+</li>
+</ul>
+<p>Gradle有6大类型依赖，如下图，其中比较常用的包括<a href="https://docs.gradle.org/3.4.1/userguide/dependency_management.html#sub:module_dependencies">External module dependency</a>，<a href="https://docs.gradle.org/3.4.1/userguide/dependency_management.html#sub:project_dependencies">Project dependency</a>，<a href="https://docs.gradle.org/3.4.1/userguide/dependency_management.html#sub:file_dependencies">File dependency</a>。
+<img src="/images/learning-gradle/dependency-types.png" alt="dependency-types"></p>
+<p>依赖管理示例：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span><span style="color:#75715e">// In this section you declare where to find the dependencies of your project
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>repositories <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    jcenter<span style="color:#f92672">()</span>
+</span></span><span style="display:flex;"><span>    jcenter <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        url <span style="color:#e6db74">&#34;http://jcenter.bintray.com/&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>    mavenCentral<span style="color:#f92672">()</span>
+</span></span><span style="display:flex;"><span>    maven <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        url <span style="color:#e6db74">&#34;http://repo.company.com/maven2&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>    ivy <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        url <span style="color:#e6db74">&#34;../local-repo&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>dependencies <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    compile <span style="color:#e6db74">&#39;com.google.guava:guava:20.0&#39;</span>
+</span></span><span style="display:flex;"><span>    compile <span style="color:#a6e22e">project</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#39;:components&#39;</span><span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>    compile <span style="color:#a6e22e">fileTree</span><span style="color:#f92672">(</span>dir: <span style="color:#e6db74">&#39;libs&#39;</span><span style="color:#f92672">,</span> include: <span style="color:#e6db74">&#39;*.jar&#39;</span><span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>    testCompile group: <span style="color:#e6db74">&#39;junit&#39;</span><span style="color:#f92672">,</span> name: <span style="color:#e6db74">&#39;junit&#39;</span><span style="color:#f92672">,</span> version: <span style="color:#e6db74">&#39;4.+&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><h4 id="task组件">Task组件</h4>
+<p>Gradle task represents some atomic piece of work which a build performs。<a href="https://docs.gradle.org/3.4.1/dsl/org.gradle.api.Task.html">Task</a>可以使用<code>task</code>关键字定义，也可以使用<a href="https://docs.gradle.org/3.4.1/javadoc/org/gradle/api/tasks/TaskContainer.html">TaskContainer.create()</a>来定义。一个Task可以依赖于另一个Task，Gradle支持使用<code>must run after</code>和<code>should run after</code>直接控制2个Task的执行顺序。预定义的Task可以被替换。
+另外Task还支持4大范围动态属性和通过<a href="https://docs.gradle.org/3.4.1/javadoc/org/gradle/api/plugins/Convention.html">Convention</a>对象支持动态方法。</p>
+<p>4大范围动态属性
+<img src="/images/learning-gradle/task-4-property-scopes.png" alt="task-4-property-scopes"></p>
+<p>Task使用示例：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>// build.gradle in root project
+</span></span><span style="display:flex;"><span>task hello1 {
+</span></span><span style="display:flex;"><span>    doLast {
+</span></span><span style="display:flex;"><span>        println &#34;Hello1 Task&#34;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>task hello2 &lt;&lt; {
+</span></span><span style="display:flex;"><span>    ext.prop2 = &#34;prop2&#34;
+</span></span><span style="display:flex;"><span>    println &#34;Hello2 Task&#34;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>hello2.dependsOn hello1
+</span></span><span style="display:flex;"><span>task(hello3, dependsOn: hello2) {
+</span></span><span style="display:flex;"><span>    doFirst {
+</span></span><span style="display:flex;"><span>        println &#34;Prop2: ${hello2.ext.prop2}&#34;
+</span></span><span style="display:flex;"><span>        println &#34;Hello3 Task&#34;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>tasks.create(&#39;hello4&#39;).dependsOn(&#39;hello3&#39;)
+</span></span><span style="display:flex;"><span>hello4.doLast {
+</span></span><span style="display:flex;"><span>    println &#34;Hello4 Task&#34;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>运行结果如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>:hello1
+</span></span><span style="display:flex;"><span>Hello1 Task
+</span></span><span style="display:flex;"><span>:hello2
+</span></span><span style="display:flex;"><span>Hello2 Task
+</span></span><span style="display:flex;"><span>:hello3
+</span></span><span style="display:flex;"><span>Prop2: prop2
+</span></span><span style="display:flex;"><span>Hello3 Task
+</span></span><span style="display:flex;"><span>:hello4
+</span></span><span style="display:flex;"><span>Hello4 Task
+</span></span></code></pre></div><h4 id="plugin组件">Plugin组件</h4>
+<p><a href="https://docs.gradle.org/3.4.1/userguide/plugins.html">Gradle插件</a>就是将很多可在多个不同项目或构建中重用的编译逻辑（属性、方法和Task等）打包起来。可以使用不同的语言来实现插件，如Groovy，Java，Scala，插件最终被编译成字节码。插件源码可位于3类地方：</p>
+<ul>
+<li>Build script：插件自动被编译并被include到<code>classpath</code>中，build script外不可用。</li>
+<li>buildSrc project：<code>buildSrc</code>子项目自动被编译并被include到<code>classpath</code>中，整个项目可用，其他项目不可用。</li>
+<li>Standalone project：可以发布jar或发布到公共仓库，其他项目可用。</li>
+</ul>
+<h3 id="gradle-wrapper目录结构">Gradle Wrapper目录结构</h3>
+<p><a href="https://docs.gradle.org/3.4.1/userguide/gradle_wrapper.html">Gradle Wrapper</a>可以使得每个项目拥有各自的Gradle版本而不互相影响。当前项目中Gradle相关文件说明如下：
+<img src="/images/learning-gradle/gradle-wrapper-in-project.png" alt="gradle-wrapper-in-project"></p>
+<p>用户主目录下Gradle相关文件说明如下：
+<img src="/images/learning-gradle/gradle-wrapper-in-home.png" alt="gradle-wrapper-in-home"></p>
+<h3 id="android-plugin-for-gradle">Android Plugin for Gradle</h3>
+<p>Android Plugin for Gradle就是通过Gradle插件机制方式实现Gradle在Android平台的扩展，详细信息请参考<a href="http://tools.android.com/tech-docs/new-build-system/user-guide">Gradle Plugin User Guide</a>和<a href="https://google.github.io/android-gradle-dsl/">Android Gradle DSL Reference</a>。</p>
+<hr>
+<p>参考</p>
+<ul>
+<li><a href="http://groovy-lang.org/">http://groovy-lang.org/</a></li>
+<li><a href="https://docs.gradle.org/3.4.1/userguide/userguide.html">https://docs.gradle.org/3.4.1/userguide/userguide.html</a></li>
+<li><a href="https://docs.gradle.org/3.4.1/dsl/">https://docs.gradle.org/3.4.1/dsl/</a></li>
+<li><a href="http://tools.android.com/">http://tools.android.com/</a></li>
+<li><a href="https://github.com/google/android-gradle-dsl">https://github.com/google/android-gradle-dsl</a></li>
+<li><a href="http://blog.csdn.net/suncaishen/article/details/6194706">http://blog.csdn.net/suncaishen/article/details/6194706</a></li>
+<li><a href="http://blog.csdn.net/kmyhy/article/details/4200563">http://blog.csdn.net/kmyhy/article/details/4200563</a></li>
+<li><a href="http://jijiaxin89.com/2015/08/29/gradle-use-note/">http://jijiaxin89.com/2015/08/29/gradle-use-note/</a></li>
+<li><a href="https://developer.android.com/studio/build/gradle-tips.html">https://developer.android.com/studio/build/gradle-tips.html</a></li>
+<li><a href="http://www.infoq.com/cn/articles/android-in-depth-gradle">http://www.infoq.com/cn/articles/android-in-depth-gradle</a></li>
+</ul>
+
+		</section>
+
+		<div class="post-tags">
+			
+			
+			<nav class="nav tags">
+				<ul class="tags">
+					
+					<li><a href="/tags/gradle">Gradle</a></li>
+					
+					<li><a href="/tags/android">Android</a></li>
+					
+					<li><a href="/tags/build">Build</a></li>
+					
+					<li><a href="/tags/%E6%9E%84%E5%BB%BA">构建</a></li>
+					
+					<li><a href="/tags/%E7%BC%96%E8%AF%91">编译</a></li>
+					
+				</ul>
+			</nav>
+			
+			
+		</div>
+		</article>
+</main>
+<footer>
+  <div style="display:flex"><a class="soc" href="https://github.com/feil0n9wan9" rel="me" title="GitHub"><i data-feather="github"></i></a>
+    <a class="border"></a><a class="soc" href="https://www.jianshu.com/u/5215dba27120" rel="me" title="JianShu"><i data-feather="book"></i></a>
+    <a class="border"></a></div>
+  <div class="footer-info">
+    2023  © Feilong Wang |  <a
+      href="https://github.com/athul/archie">Archie Theme</a> | Built with <a href="https://gohugo.io">Hugo</a>
+  </div>
+</footer>
+
+
+<script>
+  feather.replace()
+</script></div>
+    </body>
+</html>

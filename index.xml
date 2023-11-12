@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>静静的扯淡</title>
+    <link>https://feil0n9wan9.github.io/</link>
+    <description>Recent content on 静静的扯淡</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <copyright>© Feilong Wang</copyright>
+    <lastBuildDate>Sat, 01 Jul 2017 20:23:04 +0000</lastBuildDate>
+    <atom:link href="https://feil0n9wan9.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>LocationManager内存泄露</title>
+      <link>https://feil0n9wan9.github.io/posts/memory-leak-in-locationmanager/</link>
+      <pubDate>Sat, 01 Jul 2017 20:23:04 +0000</pubDate>
+      <guid>https://feil0n9wan9.github.io/posts/memory-leak-in-locationmanager/</guid>
+      <description>&lt;p&gt;最近在做一个项目的内存优化时，偶然发现一个以前没有注意到的问题，&lt;a href=&#34;https://developer.android.google.cn/reference/android/location/LocationManager.html&#34;&gt;LocationManager&lt;/a&gt;引起内存泄露，于是就想探究下泄露的Root Cause并整理出来，希望其他开发人员使用时也能够注意。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Android Things</title>
+      <link>https://feil0n9wan9.github.io/posts/android-things/</link>
+      <pubDate>Thu, 05 Jan 2017 21:52:48 +0000</pubDate>
+      <guid>https://feil0n9wan9.github.io/posts/android-things/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://www.google.com.hk/&#34;&gt;Google&lt;/a&gt;于12月13日对外发布了其新一代物联网操作系统&lt;a href=&#34;https://developer.android.com/things/index.html&#34;&gt;Android Things&lt;/a&gt;，它的愿景是为各种消费、零售和工业应用程序提供互连的设备，并提供完整立即可用的硬件解决方案，以进一步实现&lt;a href=&#34;https://developer.android.com/things/index.html&#34;&gt;If you can build an app, you can build a device&lt;/a&gt;。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Android更新概述</title>
+      <link>https://feil0n9wan9.github.io/posts/the-changes-in-different-android-versions/</link>
+      <pubDate>Sun, 30 Oct 2016 22:40:29 +0000</pubDate>
+      <guid>https://feil0n9wan9.github.io/posts/the-changes-in-different-android-versions/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://www.android.com&#34;&gt;Android&lt;/a&gt;每个版都会加入很多新功能，我们可以从官方文档&lt;a href=&#34;https://developer.android.com/about/versions/oreo/index.html&#34;&gt;Android Developers-&amp;gt;Home-&amp;gt;Android&lt;/a&gt;查看&lt;a href=&#34;https://www.android.com&#34;&gt;Android&lt;/a&gt;每个版本更新的具体内容。本文是对&lt;a href=&#34;https://developer.android.com/about/versions/oreo/index.html&#34;&gt;Android Developers-&amp;gt;Home-&amp;gt;Android&lt;/a&gt;官方文档的中文翻译。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Git多项目管理</title>
+      <link>https://feil0n9wan9.github.io/posts/managing-projects-across-git-repositories/</link>
+      <pubDate>Mon, 29 Aug 2016 23:15:23 +0000</pubDate>
+      <guid>https://feil0n9wan9.github.io/posts/managing-projects-across-git-repositories/</guid>
+      <description>&lt;p&gt;开发中我们经常会遇到这样的情况：项目越来越大，一些通用的模块我们希望将他抽离出来作为单独的项目，以便其他项目也可以使用，或者使用一些第三方库，可能我们并不想将代码直接拷贝进我们的项目里面，而仅仅只是单纯的引用。这时问题来了，你想把他们当做独立的项目，同时又想在项目中使用另一个。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Learning Gradle</title>
+      <link>https://feil0n9wan9.github.io/posts/learning-gradle/</link>
+      <pubDate>Sat, 23 Jul 2016 22:40:29 +0000</pubDate>
+      <guid>https://feil0n9wan9.github.io/posts/learning-gradle/</guid>
+      <description>Android Studio作为Android应用开发的官方IDE，默认使用Gradle作为构建工具，所以对于Android应用开发来说，Gradle是必须要掌握的工具。然而现实是，很多Android应用开发人员都不太了解Gradle，并且网上大部分关于Android Gradle的资料都是帮助解决某个具体的配置问题，缺乏系统深入的讲解。本文就来系统且深入的学习Gradle。
+Java构建工具的发展 Java构建工具最早出现的是Ant。Ant里的每一个任务（target）都可以互相依赖。Ant的最大缺点就是依赖的外部库也要添加到版本控制系统中，因为Ant没有一个机制来把这些外部库文件放在一个中央库里面，结果就是不断的拷贝和粘贴代码。
+随后Maven在2004年出现了，Maven引入了标准的项目和路径结构，还有依赖管理，不幸的是自定义的逻辑很难实现，唯一的方法就是引入插件。
+随后Ant通过Apache Ivy引入依赖管理来跟上Maven的脚步，Ant和Ivy集成实现了声明式的依赖，比如项目的编译和打包过程。
+Gradle的出现满足了很多现在构建工具的需求，Gradle提供了一个DSL（领域特定语言），一个约定优于配置的方法，还有更强大的依赖管理，Gradle使得我们可以抛弃XML的繁琐配置，引入动态语言Groovy来定义你的构建逻辑。
+Why Gradle Android Studio Project Site上对Android Studio为何选用Gradle作为构建工具描述如下：
+Gradle is an advanced build system as well as an advanced build toolkit allowing to create custom build logic through plugins. Here are some of its features that made us choose Gradle:
+Domain Specific Language (DSL) based on Groovy, used to describe and manipulate the build logic Build files are Groovy based and allow mixing of declarative elements through the DSL and using code to manipulate the DSL elements to provide custom logic.</description>
+    </item>
+    <item>
+      <title>关于我</title>
+      <link>https://feil0n9wan9.github.io/about/</link>
+      <pubDate>Tue, 05 Jul 2016 09:09:48 +0000</pubDate>
+      <guid>https://feil0n9wan9.github.io/about/</guid>
+      <description>我的计算机生涯源于对黑客技术的神往，所以最初接触计算机的几年，我的大部分时间都在研究逆向、木马等各种黑科技。当时就感慨网络太不安全，以至于之后在与计算机打交道的近10年时间里，一直小心翼翼，避免在网上留下痕迹，即使社交网络时代到来。所以，你在网上几乎找不到有关我的信息，也很难通过社交网络或其他的关系推导来找到我。
+我是王飞龙。
+我从2010年开始在BenQ做Android方面的开发。当时我们在开发一款基于Android 2.1的10寸平板电脑，并为其开发一些适应大屏幕的应用程序。这几乎是最早的Android平板设备，Android官方直到3.0才开始支持大屏幕。后来，我们又在台湾发布了名噪一时的QiSS ME深度定制ROM（基于Android 2.3），这是继MIUI之后第二个在framework里实现主题功能的ROM。
+离开BenQ我去了盛大，从事GEAK Watch相关的开发。起初是开发一些Watch上好玩的应用，随后我负责在framework里开发GEAK APIs和Resources。后来我们宣布了10万人开发计划，所以我又封装了GDS（GEAK Development Suite，包括GEAK SDK，GEAK IDE With Modified ADT，GEAK Documentation）给开发者。盛大给员工提供了极大的自由，在这里你可以实践你的任何想法。所以我额外花了一些精力搭建了适用于GEAK Watch项目的Code Review和CI系统，并制定了一系列规范。这些后来被认为是非常好的举措。
+现在，我在一家位置相关的公司工作，我希望多接触一些人，并多听听他们的想法。
+Welcome to Feilong Wang’s Personal site!
+Name：Feilong Wang Email：i@feilongwang.org LinkedIn：https://cn.linkedin.com/in/feilong-wang-170382123 Major：Android（APP，Framework，HAL，Build System） Creed：Writing Designed Codes Language：Java，C，C++，Shell，Python，Groovy，Makefile，Gradle Programs / Systems：Git / Repo / Gerrit，Jenkins，Make，Vim，JUnit Operating Systems：Linux，OS X，Windows Read Lots of Android Source Code：Activity，Service，Broadcast Receiver，Content Provider，Fragment，Loader，Drawable，Property Animation，View Measure/Layout/Draw，Handler，Looper，MessageQueue，Volley，AssertManager，Resources，aapt，Launcher，Binder，AMS，WMS，SF，ViewRoot，ActivityThread，Surface，Gralloc，Key/Touch Event，Log，Ashmen，sp/wp，Vold，Installd，BootAnimaiton，init，Boot Sequence，Building System，repo，adb，etc. I&amp;rsquo;m here!</description>
+    </item>
+    <item>
+      <title>如何选择开源许可证</title>
+      <link>https://feil0n9wan9.github.io/posts/how-to-choose-an-open-source-license/</link>
+      <pubDate>Tue, 21 Jun 2016 00:09:48 +0000</pubDate>
+      <guid>https://feil0n9wan9.github.io/posts/how-to-choose-an-open-source-license/</guid>
+      <description>&lt;p&gt;对于软件产品，无论是免费发布还是出售，制定一份许可协议都非常有用。否则，对于前者，你相当于放弃了自己所有的权利，任何人都没有义务表明你的原始作者身份，对于后者，你将不得不花费比开发更多的精力用来逐个处理授权问题。许可，就是提供给使用你产品的人有一定的权限，不过你仍然拥有版权和专利（如果申请了的话）。&lt;a href=&#34;https://en.wikipedia.org/wiki/Open-source_license&#34;&gt;开源许可证&lt;/a&gt;使得我们发布开源软件产品变得简单。&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Android on 静静的扯淡</title>
+    <link>https://feil0n9wan9.github.io/tags/android/</link>
+    <description>Recent content in Android on 静静的扯淡</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <copyright>© Feilong Wang</copyright>
+    <lastBuildDate>Sat, 01 Jul 2017 20:23:04 +0000</lastBuildDate>
+    <atom:link href="https://feil0n9wan9.github.io/tags/android/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>LocationManager内存泄露</title>
+      <link>https://feil0n9wan9.github.io/posts/memory-leak-in-locationmanager/</link>
+      <pubDate>Sat, 01 Jul 2017 20:23:04 +0000</pubDate>
+      <guid>https://feil0n9wan9.github.io/posts/memory-leak-in-locationmanager/</guid>
+      <description>&lt;p&gt;最近在做一个项目的内存优化时，偶然发现一个以前没有注意到的问题，&lt;a href=&#34;https://developer.android.google.cn/reference/android/location/LocationManager.html&#34;&gt;LocationManager&lt;/a&gt;引起内存泄露，于是就想探究下泄露的Root Cause并整理出来，希望其他开发人员使用时也能够注意。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Android Things</title>
+      <link>https://feil0n9wan9.github.io/posts/android-things/</link>
+      <pubDate>Thu, 05 Jan 2017 21:52:48 +0000</pubDate>
+      <guid>https://feil0n9wan9.github.io/posts/android-things/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://www.google.com.hk/&#34;&gt;Google&lt;/a&gt;于12月13日对外发布了其新一代物联网操作系统&lt;a href=&#34;https://developer.android.com/things/index.html&#34;&gt;Android Things&lt;/a&gt;，它的愿景是为各种消费、零售和工业应用程序提供互连的设备，并提供完整立即可用的硬件解决方案，以进一步实现&lt;a href=&#34;https://developer.android.com/things/index.html&#34;&gt;If you can build an app, you can build a device&lt;/a&gt;。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Android更新概述</title>
+      <link>https://feil0n9wan9.github.io/posts/the-changes-in-different-android-versions/</link>
+      <pubDate>Sun, 30 Oct 2016 22:40:29 +0000</pubDate>
+      <guid>https://feil0n9wan9.github.io/posts/the-changes-in-different-android-versions/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://www.android.com&#34;&gt;Android&lt;/a&gt;每个版都会加入很多新功能，我们可以从官方文档&lt;a href=&#34;https://developer.android.com/about/versions/oreo/index.html&#34;&gt;Android Developers-&amp;gt;Home-&amp;gt;Android&lt;/a&gt;查看&lt;a href=&#34;https://www.android.com&#34;&gt;Android&lt;/a&gt;每个版本更新的具体内容。本文是对&lt;a href=&#34;https://developer.android.com/about/versions/oreo/index.html&#34;&gt;Android Developers-&amp;gt;Home-&amp;gt;Android&lt;/a&gt;官方文档的中文翻译。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Learning Gradle</title>
+      <link>https://feil0n9wan9.github.io/posts/learning-gradle/</link>
+      <pubDate>Sat, 23 Jul 2016 22:40:29 +0000</pubDate>
+      <guid>https://feil0n9wan9.github.io/posts/learning-gradle/</guid>
+      <description>Android Studio作为Android应用开发的官方IDE，默认使用Gradle作为构建工具，所以对于Android应用开发来说，Gradle是必须要掌握的工具。然而现实是，很多Android应用开发人员都不太了解Gradle，并且网上大部分关于Android Gradle的资料都是帮助解决某个具体的配置问题，缺乏系统深入的讲解。本文就来系统且深入的学习Gradle。
+Java构建工具的发展 Java构建工具最早出现的是Ant。Ant里的每一个任务（target）都可以互相依赖。Ant的最大缺点就是依赖的外部库也要添加到版本控制系统中，因为Ant没有一个机制来把这些外部库文件放在一个中央库里面，结果就是不断的拷贝和粘贴代码。
+随后Maven在2004年出现了，Maven引入了标准的项目和路径结构，还有依赖管理，不幸的是自定义的逻辑很难实现，唯一的方法就是引入插件。
+随后Ant通过Apache Ivy引入依赖管理来跟上Maven的脚步，Ant和Ivy集成实现了声明式的依赖，比如项目的编译和打包过程。
+Gradle的出现满足了很多现在构建工具的需求，Gradle提供了一个DSL（领域特定语言），一个约定优于配置的方法，还有更强大的依赖管理，Gradle使得我们可以抛弃XML的繁琐配置，引入动态语言Groovy来定义你的构建逻辑。
+Why Gradle Android Studio Project Site上对Android Studio为何选用Gradle作为构建工具描述如下：
+Gradle is an advanced build system as well as an advanced build toolkit allowing to create custom build logic through plugins. Here are some of its features that made us choose Gradle:
+Domain Specific Language (DSL) based on Groovy, used to describe and manipulate the build logic Build files are Groovy based and allow mixing of declarative elements through the DSL and using code to manipulate the DSL elements to provide custom logic.</description>
+    </item>
+  </channel>
+</rss>

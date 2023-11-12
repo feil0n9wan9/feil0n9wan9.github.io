@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html><head lang="en">
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>LocationManager内存泄露 - 静静的扯淡</title><meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="最近在做一个项目的内存优化时，偶然发现一个以前没有注意到的问题，LocationManager引起内存泄露，于是就想探究下泄露的Root Cause并整理出来，希望其他开发人员使用时也能够注意。" />
+	<meta property="og:image" content="https://raw.githubusercontent.com/feil0n9wan9/feil0n9wan9.github.io/master/images/about/me.jpg"/>
+	<meta property="og:title" content="LocationManager内存泄露" />
+<meta property="og:description" content="最近在做一个项目的内存优化时，偶然发现一个以前没有注意到的问题，LocationManager引起内存泄露，于是就想探究下泄露的Root Cause并整理出来，希望其他开发人员使用时也能够注意。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://feil0n9wan9.github.io/posts/memory-leak-in-locationmanager/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2017-07-01T20:23:04+00:00" />
+<meta property="article:modified_time" content="2017-07-01T20:23:04+00:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="LocationManager内存泄露"/>
+<meta name="twitter:description" content="最近在做一个项目的内存优化时，偶然发现一个以前没有注意到的问题，LocationManager引起内存泄露，于是就想探究下泄露的Root Cause并整理出来，希望其他开发人员使用时也能够注意。"/>
+<script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+	<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@1,500&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Fira+Sans&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css?family=Roboto+Mono" rel="stylesheet">
+
+	
+	<link rel="stylesheet" type="text/css" media="screen" href="https://feil0n9wan9.github.io/css/main.ac08a4c9714baa859217f92f051deb58df2938ec352b506df655005dcaf98cc0.css" />
+		<link id="darkModeStyle" rel="stylesheet" type="text/css" href="https://feil0n9wan9.github.io/css/dark.726cd11ca6eb7c4f7d48eb420354f814e5c1b94281aaf8fd0511c1319f7f78a4.css"   />
+	
+
+	
+	
+
+	
+	
+	
+	
+</head>
+<body>
+        <div class="content"><header>
+	<div class="main">
+		<a href="https://feil0n9wan9.github.io">静静的扯淡</a>
+	</div>
+	<nav>
+		
+		<a href="/">Home</a>
+		
+		<a href="/posts">Posts</a>
+		
+		<a href="/tags">Tags</a>
+		
+		<a href="/about">About</a>
+		
+		
+	</nav>
+</header>
+
+<main>
+	<article>
+		<div class="title">
+			<h1 class="title">LocationManager内存泄露</h1>
+			<div class="meta">Posted on Jul 1, 2017</div>
+		</div>
+		
+
+		<section class="body">
+			<p>最近在做一个项目的内存优化时，偶然发现一个以前没有注意到的问题，<a href="https://developer.android.google.cn/reference/android/location/LocationManager.html">LocationManager</a>引起内存泄露，于是就想探究下泄露的Root Cause并整理出来，希望其他开发人员使用时也能够注意。</p>
+<h3 id="问题">问题</h3>
+<p>我们先看下面的示例代码（Android 7.0）：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// MainActivity.java</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">protected</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">onStart</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">super</span>.<span style="color:#a6e22e">onStart</span>();
+</span></span><span style="display:flex;"><span>    registerNmeaListener();
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">protected</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">onStop</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">super</span>.<span style="color:#a6e22e">onStop</span>();
+</span></span><span style="display:flex;"><span>    unregisterNmeaListener();
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">registerNmeaListener</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (mOnNmeaMessageListener <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span>) {
+</span></span><span style="display:flex;"><span>        mOnNmeaMessageListener <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> OnNmeaMessageListener() {
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">onNmeaMessage</span>(String message, <span style="color:#66d9ef">long</span> timestamp) {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        };
+</span></span><span style="display:flex;"><span>        mLocationManager <span style="color:#f92672">=</span> (LocationManager) getSystemService(Context.<span style="color:#a6e22e">LOCATION_SERVICE</span>);
+</span></span><span style="display:flex;"><span>        mLocationManager.<span style="color:#a6e22e">addNmeaListener</span>(mOnNmeaMessageListener);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">unregisterNmeaListener</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (mOnNmeaMessageListener <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span>) {
+</span></span><span style="display:flex;"><span>        mLocationManager.<span style="color:#a6e22e">removeNmeaListener</span>(mOnNmeaMessageListener);
+</span></span><span style="display:flex;"><span>        mOnNmeaMessageListener <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span>;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>这是一段很常规的Android代码，我们在项目中通常都会这么实现。但如果使用<a href="https://developer.android.google.cn/studio/profile/am-hprof.html">Memory Monitor</a>来查看堆内存，就发现会有内存泄露。</p>
+<p>使用<code>Memory Monitor</code>分析步骤如下：</p>
+<ol>
+<li>启动应用，然后按<code>返回</code>键退出应用。</li>
+<li>在<code>Android Monitor</code>的<code>Memory Monitor</code>界面点击<code>Initate GC</code>。</li>
+<li>点击<code>Dump Java Heap</code>生成<code>hprof</code>文件。生成完毕<code>Android Studio</code>会自动打开。</li>
+<li>选择<code>Package Tree View</code>视图，并点击<code>Class Name</code>按升序排序，这样可以迅速找到要分析的程序的包名。</li>
+<li>发现<code>MainActivity</code>的实例个数为1，即没有被GC回收，发生内存泄露。</li>
+</ol>
+<p><img src="/images/memory-leak-in-locationmanager/app-hprof.png" alt=""></p>
+<h3 id="分析">分析</h3>
+<p>为什么会出现内存泄露？从<a href="https://developer.android.google.cn/studio/profile/am-hprof.html">HPROF Viewer</a>的<code>Reference Tree</code>来看，
+GC Root（Depth为0）是<code>LocationManager</code>的内部类<code>GnssStatusListenerTransport</code>成员<code>mGnssHandler</code>，<code>mGnssHandler</code>是<code>GnssStatusListenerTransport</code>的内部类<code>GnssHandler</code>的实例，所以<code>mGnssHandler</code>隐式持有外部类<code>GnssStatusListenerTransport</code>实例的引用，而<code>GnssStatusListenerTransport</code>的成员<code>mGnssNmeaListener</code>又指向了<code>MainActivity</code>的<code>OnNmeaMessageListener</code>匿名内部类实例，从而导致<code>MainActivity</code>泄露。简单概括就是：<code>mGnssHandler-&gt;GnssStatusListenerTransport-&gt;mGnssNmeaListener-&gt;MainActivity</code>。</p>
+<p>我们可以来看一下<a href="https://developer.android.google.cn/reference/android/location/LocationManager.html">LocationManager</a>的源码，位于$SOURCEROOT/frameworks/base/location/java/android/location/LocationManager.java：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">final</span> HashMap<span style="color:#f92672">&lt;</span>OnNmeaMessageListener, GnssStatusListenerTransport<span style="color:#f92672">&gt;</span> mGnssNmeaListeners <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">new</span> HashMap<span style="color:#f92672">&lt;&gt;</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * Adds an NMEA listener.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> *
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @param listener a {@link OnNmeaMessageListener} object to register
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> *
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @return true if the listener was successfully added
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> *
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @throws SecurityException if the ACCESS_FINE_LOCATION permission is not present
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> */</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@RequiresPermission</span>(ACCESS_FINE_LOCATION)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">boolean</span> <span style="color:#a6e22e">addNmeaListener</span>(OnNmeaMessageListener listener) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> addNmeaListener(listener, <span style="color:#66d9ef">null</span>);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * Adds an NMEA listener.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> *
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @param listener a {@link OnNmeaMessageListener} object to register
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @param handler the handler that the listener runs on.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> *
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @return true if the listener was successfully added
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> *
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @throws SecurityException if the ACCESS_FINE_LOCATION permission is not present
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> */</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@RequiresPermission</span>(ACCESS_FINE_LOCATION)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">boolean</span> <span style="color:#a6e22e">addNmeaListener</span>(OnNmeaMessageListener listener, Handler handler) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">boolean</span> result;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (mGpsNmeaListeners.<span style="color:#a6e22e">get</span>(listener) <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// listener is already registered</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">true</span>;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">try</span> {
+</span></span><span style="display:flex;"><span>        GnssStatusListenerTransport transport <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">new</span> GnssStatusListenerTransport(listener, handler);
+</span></span><span style="display:flex;"><span>        result <span style="color:#f92672">=</span> mService.<span style="color:#a6e22e">registerGnssStatusCallback</span>(transport, mContext.<span style="color:#a6e22e">getPackageName</span>());
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (result) {
+</span></span><span style="display:flex;"><span>            mGnssNmeaListeners.<span style="color:#a6e22e">put</span>(listener, transport);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    } <span style="color:#66d9ef">catch</span> (RemoteException e) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">throw</span> e.<span style="color:#a6e22e">rethrowFromSystemServer</span>();
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> result;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * Removes an NMEA listener.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> *
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @param listener a {@link OnNmeaMessageListener} object to remove
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> */</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">removeNmeaListener</span>(OnNmeaMessageListener listener) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">try</span> {
+</span></span><span style="display:flex;"><span>        GnssStatusListenerTransport transport <span style="color:#f92672">=</span> mGnssNmeaListeners.<span style="color:#a6e22e">remove</span>(listener);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (transport <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span>) {
+</span></span><span style="display:flex;"><span>            mService.<span style="color:#a6e22e">unregisterGnssStatusCallback</span>(transport);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    } <span style="color:#66d9ef">catch</span> (RemoteException e) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">throw</span> e.<span style="color:#a6e22e">rethrowFromSystemServer</span>();
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>添加listener的时候会先判断下是否已经添加过，如果添加过了，就直接返回，如果没有，则使用传入的<a href="https://developer.android.google.cn/reference/android/location/OnNmeaMessageListener.html">OnNmeaMessageListener</a>对象和<a href="https://developer.android.google.cn/reference/android/os/Handler.html">Handler</a>对象构造一个对应的<code>GnssStatusListenerTransport</code>对象，并将其注册到<code>LocationManagerService</code>端，同时记录在本地<code>mGnssNmeaListeners</code>表示的HashMap中。</p>
+<p>移除listener时，先将listener从本地HashMap中移除，同时将其从<code>LocationManagerService</code>注销掉。</p>
+<p>注册到<code>LocationManagerService</code>和从<code>LocationManagerService</code>注销的过程与我们这里分析的问题关联不大，所以就不分析了。我们主要来看<code>GnssStatusListenerTransport</code>类。Android 7.0对<a href="https://developer.android.google.cn/reference/android/location/LocationManager.html">LocationManager</a>做了较大改动，主要是增加了对GPS以外的其他卫星定位系统的支持，统称为GNSS（Global Navigation Satellite System）。这里为了流程清晰，我们把7.0兼容之前老版本的代码删除了。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// This class is used to send Gnss status events to the client&#39;s specific thread.</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">GnssStatusListenerTransport</span> <span style="color:#66d9ef">extends</span> IGnssStatusListener.<span style="color:#a6e22e">Stub</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">final</span> GnssStatus.<span style="color:#a6e22e">Callback</span> mGnssCallback;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">final</span> OnNmeaMessageListener mGnssNmeaListener;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">GnssHandler</span> <span style="color:#66d9ef">extends</span> Handler {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">public</span> <span style="color:#a6e22e">GnssHandler</span>(Handler handler) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">super</span>(handler <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">?</span> handler.<span style="color:#a6e22e">getLooper</span>() : Looper.<span style="color:#a6e22e">myLooper</span>());
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">handleMessage</span>(Message msg) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">switch</span> (msg.<span style="color:#a6e22e">what</span>) {
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">case</span> NMEA_RECEIVED:
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">synchronized</span> (mNmeaBuffer) {
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">int</span> length <span style="color:#f92672">=</span> mNmeaBuffer.<span style="color:#a6e22e">size</span>();
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> 0; i <span style="color:#f92672">&lt;</span> length; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>                            Nmea nmea <span style="color:#f92672">=</span> mNmeaBuffer.<span style="color:#a6e22e">get</span>(i);
+</span></span><span style="display:flex;"><span>                            mGnssNmeaListener.<span style="color:#a6e22e">onNmeaMessage</span>(nmea.<span style="color:#a6e22e">mNmea</span>, nmea.<span style="color:#a6e22e">mTimestamp</span>);
+</span></span><span style="display:flex;"><span>                        }
+</span></span><span style="display:flex;"><span>                        mNmeaBuffer.<span style="color:#a6e22e">clear</span>();
+</span></span><span style="display:flex;"><span>                    }
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">case</span> GpsStatus.<span style="color:#a6e22e">GPS_EVENT_STARTED</span>:
+</span></span><span style="display:flex;"><span>                    mGnssCallback.<span style="color:#a6e22e">onStarted</span>();
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">case</span> GpsStatus.<span style="color:#a6e22e">GPS_EVENT_STOPPED</span>:
+</span></span><span style="display:flex;"><span>                    mGnssCallback.<span style="color:#a6e22e">onStopped</span>();
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">case</span> GpsStatus.<span style="color:#a6e22e">GPS_EVENT_FIRST_FIX</span>:
+</span></span><span style="display:flex;"><span>                    mGnssCallback.<span style="color:#a6e22e">onFirstFix</span>(mTimeToFirstFix);
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">case</span> GpsStatus.<span style="color:#a6e22e">GPS_EVENT_SATELLITE_STATUS</span>:
+</span></span><span style="display:flex;"><span>                    mGnssCallback.<span style="color:#a6e22e">onSatelliteStatusChanged</span>(mGnssStatus);
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">default</span>:
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">final</span> Handler mGnssHandler;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// This must not equal any of the GpsStatus event IDs</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> NMEA_RECEIVED <span style="color:#f92672">=</span> 1000;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Nmea</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">long</span> mTimestamp;
+</span></span><span style="display:flex;"><span>        String mNmea;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        Nmea(<span style="color:#66d9ef">long</span> timestamp, String nmea) {
+</span></span><span style="display:flex;"><span>            mTimestamp <span style="color:#f92672">=</span> timestamp;
+</span></span><span style="display:flex;"><span>            mNmea <span style="color:#f92672">=</span> nmea;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">final</span> ArrayList<span style="color:#f92672">&lt;</span>Nmea<span style="color:#f92672">&gt;</span> mNmeaBuffer;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    GnssStatusListenerTransport(GnssStatus.<span style="color:#a6e22e">Callback</span> callback) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span>(callback, <span style="color:#66d9ef">null</span>);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    GnssStatusListenerTransport(GnssStatus.<span style="color:#a6e22e">Callback</span> callback, Handler handler) {
+</span></span><span style="display:flex;"><span>        mOldGnssCallback <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span>;
+</span></span><span style="display:flex;"><span>        mGnssCallback <span style="color:#f92672">=</span> callback;
+</span></span><span style="display:flex;"><span>        mGnssHandler <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> GnssHandler(handler);
+</span></span><span style="display:flex;"><span>        mOldGnssNmeaListener <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span>;
+</span></span><span style="display:flex;"><span>        mGnssNmeaListener <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span>;
+</span></span><span style="display:flex;"><span>        mNmeaBuffer <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span>;
+</span></span><span style="display:flex;"><span>        mGpsListener <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span>;
+</span></span><span style="display:flex;"><span>        mGpsNmeaListener <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span>;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    GnssStatusListenerTransport(OnNmeaMessageListener listener) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span>(listener, <span style="color:#66d9ef">null</span>);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    GnssStatusListenerTransport(OnNmeaMessageListener listener, Handler handler) {
+</span></span><span style="display:flex;"><span>        mOldGnssCallback <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span>;
+</span></span><span style="display:flex;"><span>        mGnssCallback <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span>;
+</span></span><span style="display:flex;"><span>        mGnssHandler <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> GnssHandler(handler);
+</span></span><span style="display:flex;"><span>        mOldGnssNmeaListener <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span>;
+</span></span><span style="display:flex;"><span>        mGnssNmeaListener <span style="color:#f92672">=</span> listener;
+</span></span><span style="display:flex;"><span>        mGpsListener <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span>;
+</span></span><span style="display:flex;"><span>        mGpsNmeaListener <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span>;
+</span></span><span style="display:flex;"><span>        mNmeaBuffer <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ArrayList<span style="color:#f92672">&lt;</span>Nmea<span style="color:#f92672">&gt;</span>();
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">onGnssStarted</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (mGpsListener <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span>) {
+</span></span><span style="display:flex;"><span>            Message msg <span style="color:#f92672">=</span> Message.<span style="color:#a6e22e">obtain</span>();
+</span></span><span style="display:flex;"><span>            msg.<span style="color:#a6e22e">what</span> <span style="color:#f92672">=</span> GpsStatus.<span style="color:#a6e22e">GPS_EVENT_STARTED</span>;
+</span></span><span style="display:flex;"><span>            mGnssHandler.<span style="color:#a6e22e">sendMessage</span>(msg);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">onGnssStopped</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (mGpsListener <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span>) {
+</span></span><span style="display:flex;"><span>            Message msg <span style="color:#f92672">=</span> Message.<span style="color:#a6e22e">obtain</span>();
+</span></span><span style="display:flex;"><span>            msg.<span style="color:#a6e22e">what</span> <span style="color:#f92672">=</span> GpsStatus.<span style="color:#a6e22e">GPS_EVENT_STOPPED</span>;
+</span></span><span style="display:flex;"><span>            mGnssHandler.<span style="color:#a6e22e">sendMessage</span>(msg);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">onFirstFix</span>(<span style="color:#66d9ef">int</span> ttff) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (mGpsListener <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span>) {
+</span></span><span style="display:flex;"><span>            mTimeToFirstFix <span style="color:#f92672">=</span> ttff;
+</span></span><span style="display:flex;"><span>            Message msg <span style="color:#f92672">=</span> Message.<span style="color:#a6e22e">obtain</span>();
+</span></span><span style="display:flex;"><span>            msg.<span style="color:#a6e22e">what</span> <span style="color:#f92672">=</span> GpsStatus.<span style="color:#a6e22e">GPS_EVENT_FIRST_FIX</span>;
+</span></span><span style="display:flex;"><span>            mGnssHandler.<span style="color:#a6e22e">sendMessage</span>(msg);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">onSvStatusChanged</span>(<span style="color:#66d9ef">int</span> svCount, <span style="color:#66d9ef">int</span><span style="color:#f92672">[]</span> prnWithFlags,
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">float</span><span style="color:#f92672">[]</span> cn0s, <span style="color:#66d9ef">float</span><span style="color:#f92672">[]</span> elevations, <span style="color:#66d9ef">float</span><span style="color:#f92672">[]</span> azimuths) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (mGnssCallback <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span>) {
+</span></span><span style="display:flex;"><span>            mGnssStatus <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> GnssStatus(svCount, prnWithFlags, cn0s, elevations, azimuths);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            Message msg <span style="color:#f92672">=</span> Message.<span style="color:#a6e22e">obtain</span>();
+</span></span><span style="display:flex;"><span>            msg.<span style="color:#a6e22e">what</span> <span style="color:#f92672">=</span> GpsStatus.<span style="color:#a6e22e">GPS_EVENT_SATELLITE_STATUS</span>;
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// remove any SV status messages already in the queue</span>
+</span></span><span style="display:flex;"><span>            mGnssHandler.<span style="color:#a6e22e">removeMessages</span>(GpsStatus.<span style="color:#a6e22e">GPS_EVENT_SATELLITE_STATUS</span>);
+</span></span><span style="display:flex;"><span>            mGnssHandler.<span style="color:#a6e22e">sendMessage</span>(msg);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">onNmeaReceived</span>(<span style="color:#66d9ef">long</span> timestamp, String nmea) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (mGnssNmeaListener <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span>) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">synchronized</span> (mNmeaBuffer) {
+</span></span><span style="display:flex;"><span>                mNmeaBuffer.<span style="color:#a6e22e">add</span>(<span style="color:#66d9ef">new</span> Nmea(timestamp, nmea));
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>            Message msg <span style="color:#f92672">=</span> Message.<span style="color:#a6e22e">obtain</span>();
+</span></span><span style="display:flex;"><span>            msg.<span style="color:#a6e22e">what</span> <span style="color:#f92672">=</span> NMEA_RECEIVED;
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// remove any NMEA_RECEIVED messages already in the queue</span>
+</span></span><span style="display:flex;"><span>            mGnssHandler.<span style="color:#a6e22e">removeMessages</span>(NMEA_RECEIVED);
+</span></span><span style="display:flex;"><span>            mGnssHandler.<span style="color:#a6e22e">sendMessage</span>(msg);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>GnssStatusListenerTransport继承自<code>IGnssStatusListener.Stub</code>，熟悉<code>Binder</code>机制的同学都知道，<code>Stub</code>类展开之后的形式是<code>Stub extends Binder(implements IBinder) implements IGnssStatusListener(implements IInterface)</code>，它是<code>Binder</code>通信的本地对象，将一个<code>Binder</code>本地对象传给另一个进程，另一个进程会拿到一个<code>Binder</code>通信的<code>Proxy</code>对象，这样另一个进程就可以通过<code>Proxy</code>对象调用本地对象的方法了，而<a href="https://developer.android.google.cn/reference/android/location/LocationManager.html">LocationManager</a>中又持有<code>LocationManagerService</code>的<code>Proxy</code>对象，这样<a href="https://developer.android.google.cn/reference/android/location/LocationManager.html">LocationManager</a>和<code>LocationManagerService</code>就可以双向通信。</p>
+<p>这里<code>IGnssStatusListener</code>主要提供了5个方法供<code>LocationManagerService</code>回调以便通知相应的GNSS事件，其源码位于$SOURCEROOT/frameworks/base/location/java/android/location/IGnssStatusListener.aidl：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">/*
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * Copyright (C) 2008, The Android Open Source Project
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> *
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * Licensed under the Apache License, Version 2.0 (the &#34;License&#34;);
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * you may not use this file except in compliance with the License.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * You may obtain a copy of the License at
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> *
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> *     http://www.apache.org/licenses/LICENSE-2.0
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> *
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * Unless required by applicable law or agreed to in writing, software
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * distributed under the License is distributed on an &#34;AS IS&#34; BASIS,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * See the License for the specific language governing permissions and
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * limitations under the License.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> */</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">package</span> <span style="color:#a6e22e">android</span>.<span style="color:#a6e22e">location</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> <span style="color:#a6e22e">android</span>.<span style="color:#a6e22e">location</span>.<span style="color:#a6e22e">Location</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * {@hide}
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> */</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">oneway</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">IGnssStatusListener</span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">void</span> <span style="color:#a6e22e">onGnssStarted</span>();
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">void</span> <span style="color:#a6e22e">onGnssStopped</span>();
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">void</span> <span style="color:#a6e22e">onFirstFix</span>(<span style="color:#66d9ef">int</span> <span style="color:#a6e22e">ttff</span>);
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">void</span> <span style="color:#a6e22e">onSvStatusChanged</span>(<span style="color:#66d9ef">int</span> <span style="color:#a6e22e">svCount</span>, <span style="color:#a6e22e">in</span> <span style="color:#66d9ef">int</span>[] <span style="color:#a6e22e">svidWithFlags</span>, <span style="color:#a6e22e">in</span> <span style="color:#66d9ef">float</span>[] <span style="color:#a6e22e">cn0s</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">in</span> <span style="color:#66d9ef">float</span>[] <span style="color:#a6e22e">elevations</span>, <span style="color:#a6e22e">in</span> <span style="color:#66d9ef">float</span>[] <span style="color:#a6e22e">azimuths</span>);
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">void</span> <span style="color:#a6e22e">onNmeaReceived</span>(<span style="color:#a6e22e">long</span> <span style="color:#a6e22e">timestamp</span>, <span style="color:#a6e22e">String</span> <span style="color:#a6e22e">nmea</span>);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>可以看到在<code>GnssStatusListenerTransport</code>对<code>IGnssStatusListener</code>的接口实现里，主要是将<code>LocationManagerService</code>回传的事件通过<code>mGnssHandler</code>进行异步转发。<code>mGnssHandler</code>是<code>GnssStatusListenerTransport</code>的内部类<code>GnssHandler</code>的实例，它在<code>GnssStatusListenerTransport</code>的构造函数中被创建。这里我们注意到，<code>mGnssHandler</code>的构造与外部传入的<code>Handler</code>对象有关。如果外部传入了<code>Handler</code>对象，则<code>mGnssHandler</code>绑定到外部传入的<code>Handler</code>对象所绑定的消息队列，如果外部传入的<code>Handler</code>对象为<code>null</code>，则<code>mGnssHandler</code>绑定到调用<code>addNmeaListener</code>方法所在的线程的消息队列。接下来，我们看<code>GnssHandler</code>的<a href="https://developer.android.google.cn/reference/android/os/Handler.html#handleMessage(android.os.Message)">handleMessage</a>实现，这里的实现比较简单，就直接将事件通知给对应的listener。</p>
+<p>看到这里，估计大家也发现了，这里的<code>mGnssHandler</code>可能会引发内存泄露，因为在调用<a href="https://developer.android.google.cn/reference/android/location/LocationManager.html#removeNmeaListener(android.location.OnNmeaMessageListener)">LocationManager.removeNmeaListener</a>时并没有任何清除与<code>mGnssHandler</code>关联的<code>Message</code>的操作。<a href="https://developer.android.google.cn/reference/android/os/Handler.html">Handler</a>可能引起内存泄露请参考<a href="http://android-developers.blogspot.com/2009/01/avoiding-memory-leaks.html">http://android-developers.blogspot.com/2009/01/avoiding-memory-leaks.html</a>。</p>
+<p>对应到我们当前的场景，发生泄露的一个可能情况是<code>LocationManagerService</code>不断给<code>GnssStatusListenerTransport</code>对象发送信息，这些信息被<code>mGnssHandler</code>封装成<code>Message</code>投递到<code>mGnssHandler</code>绑定的消息队列里，这里就是主线程消息队列，当我们在主线程调用<a href="https://developer.android.google.cn/reference/android/location/LocationManager.html#removeNmeaListener(android.location.OnNmeaMessageListener)">LocationManager.removeNmeaListener</a>方法时，<code>mGnssHandler</code>可能已经往主线程的消息队列里投递了N多个消息。也就是说在主线程的消息队列里面，<a href="https://developer.android.google.cn/reference/android/app/Activity.html#onDestroy()">Activity.onDestroy</a>的消息后面有很多<code>mGnssHandler</code>投递的消息。这些<code>mGnssHandler</code>投递的位于<a href="https://developer.android.google.cn/reference/android/app/Activity.html#onDestroy()">Activity.onDestroy</a>之后的消息如果在<a href="https://developer.android.google.cn/reference/android/app/Activity.html">Activity</a>退出时没有被清除的话，就会发生<a href="https://developer.android.google.cn/reference/android/app/Activity.html">Activity</a>退出了，但是引用链<code>Message-&gt;mGnssHandler-&gt;GnssStatusListenerTransport-&gt;mGnssNmeaListener-&gt;MainActivity</code>还在，导致<code>MainActivity</code>泄露。</p>
+<h3 id="思考">思考</h3>
+<p>分析到这里就完了吗？显然不是。我们可以进一步思考：</p>
+<ol>
+<li>
+<p><code>mGnssHandler</code>投递的那些可能造成内存泄露的<a href="https://developer.android.google.cn/reference/android/os/Message.html">Message</a>也没有使用delay的方式投递，也就是说，<a href="https://developer.android.google.cn/reference/android/app/Activity.html">Activity</a>退出过不了多久，这些<a href="https://developer.android.google.cn/reference/android/os/Message.html">Message</a>就会被处理完，即 内存泄露一段时间后就会恢复正常，<code>MainActivity</code>又可以给被回收了。但事实确实如此吗？通过测试我们可以发现，即使过了很长时间，<code>MainActivity</code>依然回收不了。</p>
+</li>
+<li>
+<p><code>Memory Monitor</code>显示GC Root是<code>mGnssHandler</code>，所以很可能不是<code>Message-&gt;mGnssHandler</code>导致泄露。Android中的GC Root主要包括如下几类，可以<a href="https://developer.android.google.cn/studio/profile/am-memory.html">参考</a>，<code>mGssHandler</code>属于哪一类？如果有人知道，也请告诉我一下（参考2017/07/02更新）。</p>
+</li>
+</ol>
+<ul>
+<li>references on the stack</li>
+<li>Java Native Interface (JNI) native objects and memory</li>
+<li>static variables and functions</li>
+<li>threads and objects that can be referenced</li>
+<li>classes loaded by the bootstrap loader</li>
+<li>finalizers and unfinalized objects</li>
+<li>busy monitor objects</li>
+</ul>
+<ol start="3">
+<li><a href="https://developer.android.google.cn/reference/android/os/Handler.html">Handler</a>内存泄露的问题早在2009年就被提出来了，为什么现在Android发展到了7.0，还会出现这种问题。我们查看Android源代码中<a href="https://developer.android.google.cn/reference/android/location/LocationManager.html">LocationManager</a>的提交历史，发现<code>GnssHandler</code>的机制（或者类似机制）在<a href="https://developer.android.google.cn/reference/android/location/LocationManager.html">LocationManager</a>内部已历经几个Android版本，难道就一直没人发现这个问题吗？我们在<a href="https://issuetracker.google.com">Google Issue Tracker</a>中搜索LocationManager leak，发现确实有一些相关的<a href="https://issuetracker.google.com/issues?q=LocationManager%20leak">issue</a>，但这些issue不知道为何最后要么不了了之，要么被Google没有任何解释就直接关闭了。</li>
+<li>我们在Android的源码里搜索<a href="https://developer.android.google.cn/reference/android/os/Handler.html">Handler</a>，看Android内置程序如何使用<a href="https://developer.android.google.cn/reference/android/os/Handler.html">Handler</a>时会发现，在Android源码内部有些地方处理了泄露，如TV内部使用<a href="https://android.googlesource.com/platform/packages/apps/TV/+/master/common/src/com/android/tv/common/WeakHandler.java">WeakHandler</a>，有些地方没有处理泄露，即在Android源码内部对<a href="https://developer.android.google.cn/reference/android/os/Handler.html">Handler</a>的处理并未统一。</li>
+<li>另外我们在<a href="https://stackoverflow.com/questions/21305233/locationlistener-and-memory-leaks">StackOverflow</a>上发现这篇帖子，于是尝试将程序改为：</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// MainActivity</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">protected</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">onResume</span>() {
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">super</span>.<span style="color:#a6e22e">onResume</span>();
+</span></span><span style="display:flex;"><span>      registerNmeaListener();
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">protected</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">onPause</span>() {
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">super</span>.<span style="color:#a6e22e">onPause</span>();
+</span></span><span style="display:flex;"><span>      unregisterNmeaListener();
+</span></span><span style="display:flex;"><span>  }
+</span></span></code></pre></div><p>竟然意外的发现<strong>内存泄露消失</strong>了。但是我们知道按<code>返回</code>建退出应用时，<a href="https://developer.android.google.cn/reference/android/app/Activity.html#onPause()">onPause</a>，<a href="https://developer.android.google.cn/reference/android/app/Activity.html#onStop()">onStop</a>和<a href="https://developer.android.google.cn/reference/android/app/Activity.html#onDestroy()">onDestroy</a>是在同一个<a href="https://developer.android.google.cn/reference/android/os/Message.html">Message</a>里处理的。具体可以参见<code>ActivityThread.performDestroyActivity</code>，源码位于$SOURCEROOT/frameworks/base/core/java/android/app/ActivityThread.java：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">private</span> ActivityClientRecord <span style="color:#a6e22e">performDestroyActivity</span>(IBinder token, <span style="color:#66d9ef">boolean</span> finishing,
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">int</span> configChanges, <span style="color:#66d9ef">boolean</span> getNonConfigInstance) {
+</span></span><span style="display:flex;"><span>    ActivityClientRecord r <span style="color:#f92672">=</span> mActivities.<span style="color:#a6e22e">get</span>(token);
+</span></span><span style="display:flex;"><span>    Class<span style="color:#f92672">&lt;?</span> <span style="color:#66d9ef">extends</span> Activity<span style="color:#f92672">&gt;</span> activityClass <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (localLOGV) Slog.<span style="color:#a6e22e">v</span>(TAG, <span style="color:#e6db74">&#34;Performing finish of &#34;</span> <span style="color:#f92672">+</span> r);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (r <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span>) {
+</span></span><span style="display:flex;"><span>        activityClass <span style="color:#f92672">=</span> r.<span style="color:#a6e22e">activity</span>.<span style="color:#a6e22e">getClass</span>();
+</span></span><span style="display:flex;"><span>        r.<span style="color:#a6e22e">activity</span>.<span style="color:#a6e22e">mConfigChangeFlags</span> <span style="color:#f92672">|=</span> configChanges;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (finishing) {
+</span></span><span style="display:flex;"><span>            r.<span style="color:#a6e22e">activity</span>.<span style="color:#a6e22e">mFinished</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span>;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        performPauseActivityIfNeeded(r, <span style="color:#e6db74">&#34;destroy&#34;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>r.<span style="color:#a6e22e">stopped</span>) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">try</span> {
+</span></span><span style="display:flex;"><span>                r.<span style="color:#a6e22e">activity</span>.<span style="color:#a6e22e">performStop</span>(r.<span style="color:#a6e22e">mPreserveWindow</span>);
+</span></span><span style="display:flex;"><span>            } <span style="color:#66d9ef">catch</span> (SuperNotCalledException e) {
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">throw</span> e;
+</span></span><span style="display:flex;"><span>            } <span style="color:#66d9ef">catch</span> (Exception e) {
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>mInstrumentation.<span style="color:#a6e22e">onException</span>(r.<span style="color:#a6e22e">activity</span>, e)) {
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> RuntimeException(
+</span></span><span style="display:flex;"><span>                            <span style="color:#e6db74">&#34;Unable to stop activity &#34;</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#f92672">+</span> safeToComponentShortString(r.<span style="color:#a6e22e">intent</span>)
+</span></span><span style="display:flex;"><span>                            <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;: &#34;</span> <span style="color:#f92672">+</span> e.<span style="color:#a6e22e">toString</span>(), e);
+</span></span><span style="display:flex;"><span>                }
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>            r.<span style="color:#a6e22e">stopped</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span>;
+</span></span><span style="display:flex;"><span>            EventLog.<span style="color:#a6e22e">writeEvent</span>(LOG_AM_ON_STOP_CALLED, UserHandle.<span style="color:#a6e22e">myUserId</span>(),
+</span></span><span style="display:flex;"><span>                    r.<span style="color:#a6e22e">activity</span>.<span style="color:#a6e22e">getComponentName</span>().<span style="color:#a6e22e">getClassName</span>(), <span style="color:#e6db74">&#34;destroy&#34;</span>);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (getNonConfigInstance) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">try</span> {
+</span></span><span style="display:flex;"><span>                r.<span style="color:#a6e22e">lastNonConfigurationInstances</span>
+</span></span><span style="display:flex;"><span>                        <span style="color:#f92672">=</span> r.<span style="color:#a6e22e">activity</span>.<span style="color:#a6e22e">retainNonConfigurationInstances</span>();
+</span></span><span style="display:flex;"><span>            } <span style="color:#66d9ef">catch</span> (Exception e) {
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>mInstrumentation.<span style="color:#a6e22e">onException</span>(r.<span style="color:#a6e22e">activity</span>, e)) {
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> RuntimeException(
+</span></span><span style="display:flex;"><span>                            <span style="color:#e6db74">&#34;Unable to retain activity &#34;</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#f92672">+</span> r.<span style="color:#a6e22e">intent</span>.<span style="color:#a6e22e">getComponent</span>().<span style="color:#a6e22e">toShortString</span>()
+</span></span><span style="display:flex;"><span>                            <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;: &#34;</span> <span style="color:#f92672">+</span> e.<span style="color:#a6e22e">toString</span>(), e);
+</span></span><span style="display:flex;"><span>                }
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">try</span> {
+</span></span><span style="display:flex;"><span>            r.<span style="color:#a6e22e">activity</span>.<span style="color:#a6e22e">mCalled</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span>;
+</span></span><span style="display:flex;"><span>            mInstrumentation.<span style="color:#a6e22e">callActivityOnDestroy</span>(r.<span style="color:#a6e22e">activity</span>);
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>r.<span style="color:#a6e22e">activity</span>.<span style="color:#a6e22e">mCalled</span>) {
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> SuperNotCalledException(
+</span></span><span style="display:flex;"><span>                    <span style="color:#e6db74">&#34;Activity &#34;</span> <span style="color:#f92672">+</span> safeToComponentShortString(r.<span style="color:#a6e22e">intent</span>) <span style="color:#f92672">+</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#e6db74">&#34; did not call through to super.onDestroy()&#34;</span>);
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> (r.<span style="color:#a6e22e">window</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span>) {
+</span></span><span style="display:flex;"><span>                r.<span style="color:#a6e22e">window</span>.<span style="color:#a6e22e">closeAllPanels</span>();
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        } <span style="color:#66d9ef">catch</span> (SuperNotCalledException e) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">throw</span> e;
+</span></span><span style="display:flex;"><span>        } <span style="color:#66d9ef">catch</span> (Exception e) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>mInstrumentation.<span style="color:#a6e22e">onException</span>(r.<span style="color:#a6e22e">activity</span>, e)) {
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> RuntimeException(
+</span></span><span style="display:flex;"><span>                        <span style="color:#e6db74">&#34;Unable to destroy activity &#34;</span> <span style="color:#f92672">+</span> safeToComponentShortString(r.<span style="color:#a6e22e">intent</span>)
+</span></span><span style="display:flex;"><span>                        <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;: &#34;</span> <span style="color:#f92672">+</span> e.<span style="color:#a6e22e">toString</span>(), e);
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    mActivities.<span style="color:#a6e22e">remove</span>(token);
+</span></span><span style="display:flex;"><span>    StrictMode.<span style="color:#a6e22e">decrementExpectedActivityCount</span>(activityClass);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> r;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>既然是在同一个<a href="https://developer.android.google.cn/reference/android/os/Message.html">Message</a>里处理，那为何在<a href="https://developer.android.google.cn/reference/android/app/Activity.html#onPause()">onPause</a>中移除listener不会造成泄露，而在<a href="https://developer.android.google.cn/reference/android/app/Activity.html#onStop()">onStop</a>中移除listener就会造成内存泄露？</p>
+<h3 id="解决">解决</h3>
+<p>虽然现在我们还有很多暂时无法解答的问题，但对出现的问题我们还是有要解决方案。</p>
+<h4 id="在onpausehttpsdeveloperandroidgooglecnreferenceandroidappactivityhtmlonpause4041移除listener">在<a href="https://developer.android.google.cn/reference/android/app/Activity.html#onPause()">onPause</a>移除listener</h4>
+<p>从之前分析来看，如果业务满足在<a href="https://developer.android.google.cn/reference/android/app/Activity.html#onPause()">onPause</a>中移除listener的情况则可以使用此方法完美解决。若业务不满足在<a href="https://developer.android.google.cn/reference/android/app/Activity.html#onPause()">onPause</a>中移除listener的情况（因为进入<a href="https://developer.android.google.cn/reference/android/app/Activity.html#onPause()">onPause</a>时Activity可能没有被完全遮挡，所以底层视图还是需要更新，因此对于这种情况，我们不能移除listener），我们只能采用work around的方式。</p>
+<h4 id="反射">反射</h4>
+<p>可以通过反射拿到<code>mGnssHandler</code>的引用，然后移除所有相关的消息，并将<code>GnssStatusListenerTransport</code>内部<code>mGnssNmeaListener</code>的引用置<code>null</code>。</p>
+<h4 id="使用softreferencehttpsdeveloperandroidgooglecnreferencejavalangrefsoftreferencehtml和applicationhttpsdeveloperandroidgooglecnreferenceandroidappapplicationhtml-context">使用<a href="https://developer.android.google.cn/reference/java/lang/ref/SoftReference.html">SoftReference</a>和<a href="https://developer.android.google.cn/reference/android/app/Application.html">Application</a> Context</h4>
+<p>我们可以实现一个足够小的静态的<a href="https://developer.android.google.cn/reference/android/location/OnNmeaMessageListener.html">OnNmeaMessageListener</a>内部类并持有外部<code>MainActivity</code>的软引用，然后将<a href="https://developer.android.google.cn/reference/android/location/OnNmeaMessageListener.html">OnNmeaMessageListener</a>接收到的所有事件转发给外部的<code>MainActivity</code>来处理，以保持内部类足够小。</p>
+<p>使用SoftReference的方式很好理解，但为什么要同时使用Application Context呢？这是因为GnssStatusListenerTransport无法被回收会导致LocationManager无法回收，而LocationManager持有调用getSystemService的调用者的Context。在我们这个场景中就是<code>MainActivity</code>，因此还是会导致<code>MainActivity</code>泄露。使用Application Context使得整个应用只会构造一个LocationManager，这点可以从<code>SystemServiceRegistry</code>源码来看，源码位于$SOURCEROOT/frameworks/base/core/java/android/app/SystemServiceRegistry.java：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>registerService(Context.<span style="color:#a6e22e">LOCATION_SERVICE</span>, LocationManager.<span style="color:#a6e22e">class</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">new</span> CachedServiceFetcher<span style="color:#f92672">&lt;</span>LocationManager<span style="color:#f92672">&gt;</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> LocationManager <span style="color:#a6e22e">createService</span>(ContextImpl ctx) {
+</span></span><span style="display:flex;"><span>        IBinder b <span style="color:#f92672">=</span> ServiceManager.<span style="color:#a6e22e">getService</span>(Context.<span style="color:#a6e22e">LOCATION_SERVICE</span>);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> LocationManager(ctx, ILocationManager.<span style="color:#a6e22e">Stub</span>.<span style="color:#a6e22e">asInterface</span>(b));
+</span></span><span style="display:flex;"><span>    }});
+</span></span></code></pre></div><p>我们知道<a href="https://developer.android.google.cn/reference/android/content/Context.html">Context</a>采用了设计模式里的装饰模式，<code>ContextImpl</code>是<code>ContextWrapper</code>（Activity和Application的父类）真正做事情的类，同时<code>ContextImpl</code>内部持有Out Context，即<code>ContextWrapper</code>的引用。从SystemServiceRegistry可以看出，LocationManager与<code>ContextWrapper</code>是一一对应的关系，即使用LocationManager的每一个Activity都会创建一个LocationManager的实例。在我们这个场景中LocationManager持有ContextImpl的引用，ContextImpl持有Out Context，即<code>MainActivity</code>或<code>Application</code>的引用，从而导致<code>MainActivity</code>泄露，而统一使用Application Context则不会有这个问题。</p>
+<p>好了，到此我们整个LocationManager泄露的问题就说完了。对于前面还无法的解答的问题，我会继续分析。如果有人知道答案，也请告诉我一声。</p>
+<h3 id="updated-20170702">Updated 2017/07/02</h3>
+<p>当我们使用上述反射机制解决了<code>MainActivity</code>的内存泄露时，<code>android.location</code>包的内存泄露还是存在的。此时我们通过<code>Memory Monitor</code>来进一步分析<code>android.location</code>包的堆内存情况，如下图：
+<img src="/images/memory-leak-in-locationmanager/location-hprof.png" alt="">
+GC Root是<code>GnssStatusListenerTransport</code>，并且除了<code>FinalizerReference</code>，没有其他引用指向它。<code>FinalizerReference</code>是Android framework的一个隐藏类，主要用来实现Java的<a href="https://docs.oracle.com/javase/specs/jls/se7/html/jls-12.html#jls-12.6">finalize机制</a>。所有重写finalize()方法的类对象，最后都会被FinalizerReference类的静态变量引用，所以当它们没有强引用时不会被虚拟机立即回收，而是GC会将这些重写了finalize()方法的对象压入到ReferenceQueue中。同时会有一个守护线程<code>Finalize Daemon</code>来真正处理调用他们的<code>finalize</code>函数，实现垃圾回收。所以重写了finalize()方法的类对象需要至少经过两轮GC才有可能被释放，具体释放时机不确定。这与我们前面介绍Android GC Root有一类是<code>finalizers and unfinalized objects</code>不谋而合。</p>
+<p>但是我们在<code>GnssStatusListenerTransport</code>并没有发现<code>finalize()</code>被重写，这到底是怎么回事呢？相信大家一定也猜到了：在父类里重写了。我们依次查看<code>GnssStatusListenerTransport</code>的父类，发现<a href="https://developer.android.google.cn/reference/android/os/Binder.html">Binder</a>类重写了<code>finalize()</code>方法：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">protected</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">finalize</span>() <span style="color:#66d9ef">throws</span> Throwable {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">try</span> {
+</span></span><span style="display:flex;"><span>        destroy();
+</span></span><span style="display:flex;"><span>    } <span style="color:#66d9ef">finally</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">super</span>.<span style="color:#a6e22e">finalize</span>();
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>到此，我们终于找到了<a href="https://developer.android.google.cn/reference/android/location/LocationManager.html">LocationManager</a>泄露的Root Cause。Android系统要解决这个问题，可以在<code>GnssStatusListenerTransport</code>类中添加一个cleanup的方法来清除所有的外部引用，然后在移除listener之后调用一下cleanup方法即可。</p>
+		</section>
+
+		<div class="post-tags">
+			
+			
+			<nav class="nav tags">
+				<ul class="tags">
+					
+					<li><a href="/tags/android">Android</a></li>
+					
+					<li><a href="/tags/locationmanager">LocationManager</a></li>
+					
+					<li><a href="/tags/memory-leak">Memory Leak</a></li>
+					
+					<li><a href="/tags/leak">Leak</a></li>
+					
+				</ul>
+			</nav>
+			
+			
+		</div>
+		</article>
+</main>
+<footer>
+  <div style="display:flex"><a class="soc" href="https://github.com/feil0n9wan9" rel="me" title="GitHub"><i data-feather="github"></i></a>
+    <a class="border"></a><a class="soc" href="https://www.jianshu.com/u/5215dba27120" rel="me" title="JianShu"><i data-feather="book"></i></a>
+    <a class="border"></a></div>
+  <div class="footer-info">
+    2023  © Feilong Wang |  <a
+      href="https://github.com/athul/archie">Archie Theme</a> | Built with <a href="https://gohugo.io">Hugo</a>
+  </div>
+</footer>
+
+
+<script>
+  feather.replace()
+</script></div>
+    </body>
+</html>

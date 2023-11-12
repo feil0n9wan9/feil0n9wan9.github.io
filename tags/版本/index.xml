@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>版本 on 静静的扯淡</title>
+    <link>https://feil0n9wan9.github.io/tags/%E7%89%88%E6%9C%AC/</link>
+    <description>Recent content in 版本 on 静静的扯淡</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <copyright>© Feilong Wang</copyright>
+    <lastBuildDate>Sun, 30 Oct 2016 22:40:29 +0000</lastBuildDate>
+    <atom:link href="https://feil0n9wan9.github.io/tags/%E7%89%88%E6%9C%AC/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Android更新概述</title>
+      <link>https://feil0n9wan9.github.io/posts/the-changes-in-different-android-versions/</link>
+      <pubDate>Sun, 30 Oct 2016 22:40:29 +0000</pubDate>
+      <guid>https://feil0n9wan9.github.io/posts/the-changes-in-different-android-versions/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://www.android.com&#34;&gt;Android&lt;/a&gt;每个版都会加入很多新功能，我们可以从官方文档&lt;a href=&#34;https://developer.android.com/about/versions/oreo/index.html&#34;&gt;Android Developers-&amp;gt;Home-&amp;gt;Android&lt;/a&gt;查看&lt;a href=&#34;https://www.android.com&#34;&gt;Android&lt;/a&gt;每个版本更新的具体内容。本文是对&lt;a href=&#34;https://developer.android.com/about/versions/oreo/index.html&#34;&gt;Android Developers-&amp;gt;Home-&amp;gt;Android&lt;/a&gt;官方文档的中文翻译。&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>
