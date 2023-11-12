@@ -2,144 +2,144 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Tags on 静静的扯淡</title>
-    <link>https://feil0n9wan9.github.io/tags/</link>
+    <link>https://feilongwang.org/tags/</link>
     <description>Recent content in Tags on 静静的扯淡</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     <copyright>© Feilong Wang</copyright>
     <lastBuildDate>Sat, 01 Jul 2017 20:23:04 +0000</lastBuildDate>
-    <atom:link href="https://feil0n9wan9.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://feilongwang.org/tags/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Android</title>
-      <link>https://feil0n9wan9.github.io/tags/android/</link>
+      <link>https://feilongwang.org/tags/android/</link>
       <pubDate>Sat, 01 Jul 2017 20:23:04 +0000</pubDate>
-      <guid>https://feil0n9wan9.github.io/tags/android/</guid>
+      <guid>https://feilongwang.org/tags/android/</guid>
       <description></description>
     </item>
     <item>
       <title>Leak</title>
-      <link>https://feil0n9wan9.github.io/tags/leak/</link>
+      <link>https://feilongwang.org/tags/leak/</link>
       <pubDate>Sat, 01 Jul 2017 20:23:04 +0000</pubDate>
-      <guid>https://feil0n9wan9.github.io/tags/leak/</guid>
+      <guid>https://feilongwang.org/tags/leak/</guid>
       <description></description>
     </item>
     <item>
       <title>LocationManager</title>
-      <link>https://feil0n9wan9.github.io/tags/locationmanager/</link>
+      <link>https://feilongwang.org/tags/locationmanager/</link>
       <pubDate>Sat, 01 Jul 2017 20:23:04 +0000</pubDate>
-      <guid>https://feil0n9wan9.github.io/tags/locationmanager/</guid>
+      <guid>https://feilongwang.org/tags/locationmanager/</guid>
       <description></description>
     </item>
     <item>
       <title>Memory Leak</title>
-      <link>https://feil0n9wan9.github.io/tags/memory-leak/</link>
+      <link>https://feilongwang.org/tags/memory-leak/</link>
       <pubDate>Sat, 01 Jul 2017 20:23:04 +0000</pubDate>
-      <guid>https://feil0n9wan9.github.io/tags/memory-leak/</guid>
+      <guid>https://feilongwang.org/tags/memory-leak/</guid>
       <description></description>
     </item>
     <item>
       <title>Brillo</title>
-      <link>https://feil0n9wan9.github.io/tags/brillo/</link>
+      <link>https://feilongwang.org/tags/brillo/</link>
       <pubDate>Thu, 05 Jan 2017 21:52:48 +0000</pubDate>
-      <guid>https://feil0n9wan9.github.io/tags/brillo/</guid>
+      <guid>https://feilongwang.org/tags/brillo/</guid>
       <description></description>
     </item>
     <item>
       <title>IoT</title>
-      <link>https://feil0n9wan9.github.io/tags/iot/</link>
+      <link>https://feilongwang.org/tags/iot/</link>
       <pubDate>Thu, 05 Jan 2017 21:52:48 +0000</pubDate>
-      <guid>https://feil0n9wan9.github.io/tags/iot/</guid>
+      <guid>https://feilongwang.org/tags/iot/</guid>
       <description></description>
     </item>
     <item>
       <title>Things</title>
-      <link>https://feil0n9wan9.github.io/tags/things/</link>
+      <link>https://feilongwang.org/tags/things/</link>
       <pubDate>Thu, 05 Jan 2017 21:52:48 +0000</pubDate>
-      <guid>https://feil0n9wan9.github.io/tags/things/</guid>
+      <guid>https://feilongwang.org/tags/things/</guid>
       <description></description>
     </item>
     <item>
       <title>文档</title>
-      <link>https://feil0n9wan9.github.io/tags/%E6%96%87%E6%A1%A3/</link>
+      <link>https://feilongwang.org/tags/%E6%96%87%E6%A1%A3/</link>
       <pubDate>Sun, 30 Oct 2016 22:40:29 +0000</pubDate>
-      <guid>https://feil0n9wan9.github.io/tags/%E6%96%87%E6%A1%A3/</guid>
+      <guid>https://feilongwang.org/tags/%E6%96%87%E6%A1%A3/</guid>
       <description></description>
     </item>
     <item>
       <title>更新</title>
-      <link>https://feil0n9wan9.github.io/tags/%E6%9B%B4%E6%96%B0/</link>
+      <link>https://feilongwang.org/tags/%E6%9B%B4%E6%96%B0/</link>
       <pubDate>Sun, 30 Oct 2016 22:40:29 +0000</pubDate>
-      <guid>https://feil0n9wan9.github.io/tags/%E6%9B%B4%E6%96%B0/</guid>
+      <guid>https://feilongwang.org/tags/%E6%9B%B4%E6%96%B0/</guid>
       <description></description>
     </item>
     <item>
       <title>版本</title>
-      <link>https://feil0n9wan9.github.io/tags/%E7%89%88%E6%9C%AC/</link>
+      <link>https://feilongwang.org/tags/%E7%89%88%E6%9C%AC/</link>
       <pubDate>Sun, 30 Oct 2016 22:40:29 +0000</pubDate>
-      <guid>https://feil0n9wan9.github.io/tags/%E7%89%88%E6%9C%AC/</guid>
+      <guid>https://feilongwang.org/tags/%E7%89%88%E6%9C%AC/</guid>
       <description></description>
     </item>
     <item>
       <title>翻译</title>
-      <link>https://feil0n9wan9.github.io/tags/%E7%BF%BB%E8%AF%91/</link>
+      <link>https://feilongwang.org/tags/%E7%BF%BB%E8%AF%91/</link>
       <pubDate>Sun, 30 Oct 2016 22:40:29 +0000</pubDate>
-      <guid>https://feil0n9wan9.github.io/tags/%E7%BF%BB%E8%AF%91/</guid>
+      <guid>https://feilongwang.org/tags/%E7%BF%BB%E8%AF%91/</guid>
       <description></description>
     </item>
     <item>
       <title>Git</title>
-      <link>https://feil0n9wan9.github.io/tags/git/</link>
+      <link>https://feilongwang.org/tags/git/</link>
       <pubDate>Mon, 29 Aug 2016 23:15:23 +0000</pubDate>
-      <guid>https://feil0n9wan9.github.io/tags/git/</guid>
+      <guid>https://feilongwang.org/tags/git/</guid>
       <description></description>
     </item>
     <item>
       <title>项目</title>
-      <link>https://feil0n9wan9.github.io/tags/%E9%A1%B9%E7%9B%AE/</link>
+      <link>https://feilongwang.org/tags/%E9%A1%B9%E7%9B%AE/</link>
       <pubDate>Mon, 29 Aug 2016 23:15:23 +0000</pubDate>
-      <guid>https://feil0n9wan9.github.io/tags/%E9%A1%B9%E7%9B%AE/</guid>
+      <guid>https://feilongwang.org/tags/%E9%A1%B9%E7%9B%AE/</guid>
       <description></description>
     </item>
     <item>
       <title>Build</title>
-      <link>https://feil0n9wan9.github.io/tags/build/</link>
+      <link>https://feilongwang.org/tags/build/</link>
       <pubDate>Sat, 23 Jul 2016 22:40:29 +0000</pubDate>
-      <guid>https://feil0n9wan9.github.io/tags/build/</guid>
+      <guid>https://feilongwang.org/tags/build/</guid>
       <description></description>
     </item>
     <item>
       <title>Gradle</title>
-      <link>https://feil0n9wan9.github.io/tags/gradle/</link>
+      <link>https://feilongwang.org/tags/gradle/</link>
       <pubDate>Sat, 23 Jul 2016 22:40:29 +0000</pubDate>
-      <guid>https://feil0n9wan9.github.io/tags/gradle/</guid>
+      <guid>https://feilongwang.org/tags/gradle/</guid>
       <description></description>
     </item>
     <item>
       <title>构建</title>
-      <link>https://feil0n9wan9.github.io/tags/%E6%9E%84%E5%BB%BA/</link>
+      <link>https://feilongwang.org/tags/%E6%9E%84%E5%BB%BA/</link>
       <pubDate>Sat, 23 Jul 2016 22:40:29 +0000</pubDate>
-      <guid>https://feil0n9wan9.github.io/tags/%E6%9E%84%E5%BB%BA/</guid>
+      <guid>https://feilongwang.org/tags/%E6%9E%84%E5%BB%BA/</guid>
       <description></description>
     </item>
     <item>
       <title>编译</title>
-      <link>https://feil0n9wan9.github.io/tags/%E7%BC%96%E8%AF%91/</link>
+      <link>https://feilongwang.org/tags/%E7%BC%96%E8%AF%91/</link>
       <pubDate>Sat, 23 Jul 2016 22:40:29 +0000</pubDate>
-      <guid>https://feil0n9wan9.github.io/tags/%E7%BC%96%E8%AF%91/</guid>
+      <guid>https://feilongwang.org/tags/%E7%BC%96%E8%AF%91/</guid>
       <description></description>
     </item>
     <item>
       <title>开源</title>
-      <link>https://feil0n9wan9.github.io/tags/%E5%BC%80%E6%BA%90/</link>
+      <link>https://feilongwang.org/tags/%E5%BC%80%E6%BA%90/</link>
       <pubDate>Tue, 21 Jun 2016 00:09:48 +0000</pubDate>
-      <guid>https://feil0n9wan9.github.io/tags/%E5%BC%80%E6%BA%90/</guid>
+      <guid>https://feilongwang.org/tags/%E5%BC%80%E6%BA%90/</guid>
       <description></description>
     </item>
     <item>
       <title>许可证</title>
-      <link>https://feil0n9wan9.github.io/tags/%E8%AE%B8%E5%8F%AF%E8%AF%81/</link>
+      <link>https://feilongwang.org/tags/%E8%AE%B8%E5%8F%AF%E8%AF%81/</link>
       <pubDate>Tue, 21 Jun 2016 00:09:48 +0000</pubDate>
-      <guid>https://feil0n9wan9.github.io/tags/%E8%AE%B8%E5%8F%AF%E8%AF%81/</guid>
+      <guid>https://feilongwang.org/tags/%E8%AE%B8%E5%8F%AF%E8%AF%81/</guid>
       <description></description>
     </item>
   </channel>

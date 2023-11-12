@@ -2,46 +2,46 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>开发 on 静静的扯淡</title>
-    <link>https://feil0n9wan9.github.io/categories/%E5%BC%80%E5%8F%91/</link>
+    <link>https://feilongwang.org/categories/%E5%BC%80%E5%8F%91/</link>
     <description>Recent content in 开发 on 静静的扯淡</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     <copyright>© Feilong Wang</copyright>
     <lastBuildDate>Sat, 01 Jul 2017 20:23:04 +0000</lastBuildDate>
-    <atom:link href="https://feil0n9wan9.github.io/categories/%E5%BC%80%E5%8F%91/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://feilongwang.org/categories/%E5%BC%80%E5%8F%91/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>LocationManager内存泄露</title>
-      <link>https://feil0n9wan9.github.io/posts/memory-leak-in-locationmanager/</link>
+      <link>https://feilongwang.org/posts/memory-leak-in-locationmanager/</link>
       <pubDate>Sat, 01 Jul 2017 20:23:04 +0000</pubDate>
-      <guid>https://feil0n9wan9.github.io/posts/memory-leak-in-locationmanager/</guid>
+      <guid>https://feilongwang.org/posts/memory-leak-in-locationmanager/</guid>
       <description>&lt;p&gt;最近在做一个项目的内存优化时，偶然发现一个以前没有注意到的问题，&lt;a href=&#34;https://developer.android.google.cn/reference/android/location/LocationManager.html&#34;&gt;LocationManager&lt;/a&gt;引起内存泄露，于是就想探究下泄露的Root Cause并整理出来，希望其他开发人员使用时也能够注意。&lt;/p&gt;</description>
     </item>
     <item>
       <title>Android Things</title>
-      <link>https://feil0n9wan9.github.io/posts/android-things/</link>
+      <link>https://feilongwang.org/posts/android-things/</link>
       <pubDate>Thu, 05 Jan 2017 21:52:48 +0000</pubDate>
-      <guid>https://feil0n9wan9.github.io/posts/android-things/</guid>
+      <guid>https://feilongwang.org/posts/android-things/</guid>
       <description>&lt;p&gt;&lt;a href=&#34;https://www.google.com.hk/&#34;&gt;Google&lt;/a&gt;于12月13日对外发布了其新一代物联网操作系统&lt;a href=&#34;https://developer.android.com/things/index.html&#34;&gt;Android Things&lt;/a&gt;，它的愿景是为各种消费、零售和工业应用程序提供互连的设备，并提供完整立即可用的硬件解决方案，以进一步实现&lt;a href=&#34;https://developer.android.com/things/index.html&#34;&gt;If you can build an app, you can build a device&lt;/a&gt;。&lt;/p&gt;</description>
     </item>
     <item>
       <title>Android更新概述</title>
-      <link>https://feil0n9wan9.github.io/posts/the-changes-in-different-android-versions/</link>
+      <link>https://feilongwang.org/posts/the-changes-in-different-android-versions/</link>
       <pubDate>Sun, 30 Oct 2016 22:40:29 +0000</pubDate>
-      <guid>https://feil0n9wan9.github.io/posts/the-changes-in-different-android-versions/</guid>
+      <guid>https://feilongwang.org/posts/the-changes-in-different-android-versions/</guid>
       <description>&lt;p&gt;&lt;a href=&#34;https://www.android.com&#34;&gt;Android&lt;/a&gt;每个版都会加入很多新功能，我们可以从官方文档&lt;a href=&#34;https://developer.android.com/about/versions/oreo/index.html&#34;&gt;Android Developers-&amp;gt;Home-&amp;gt;Android&lt;/a&gt;查看&lt;a href=&#34;https://www.android.com&#34;&gt;Android&lt;/a&gt;每个版本更新的具体内容。本文是对&lt;a href=&#34;https://developer.android.com/about/versions/oreo/index.html&#34;&gt;Android Developers-&amp;gt;Home-&amp;gt;Android&lt;/a&gt;官方文档的中文翻译。&lt;/p&gt;</description>
     </item>
     <item>
       <title>Git多项目管理</title>
-      <link>https://feil0n9wan9.github.io/posts/managing-projects-across-git-repositories/</link>
+      <link>https://feilongwang.org/posts/managing-projects-across-git-repositories/</link>
       <pubDate>Mon, 29 Aug 2016 23:15:23 +0000</pubDate>
-      <guid>https://feil0n9wan9.github.io/posts/managing-projects-across-git-repositories/</guid>
+      <guid>https://feilongwang.org/posts/managing-projects-across-git-repositories/</guid>
       <description>&lt;p&gt;开发中我们经常会遇到这样的情况：项目越来越大，一些通用的模块我们希望将他抽离出来作为单独的项目，以便其他项目也可以使用，或者使用一些第三方库，可能我们并不想将代码直接拷贝进我们的项目里面，而仅仅只是单纯的引用。这时问题来了，你想把他们当做独立的项目，同时又想在项目中使用另一个。&lt;/p&gt;</description>
     </item>
     <item>
       <title>Learning Gradle</title>
-      <link>https://feil0n9wan9.github.io/posts/learning-gradle/</link>
+      <link>https://feilongwang.org/posts/learning-gradle/</link>
       <pubDate>Sat, 23 Jul 2016 22:40:29 +0000</pubDate>
-      <guid>https://feil0n9wan9.github.io/posts/learning-gradle/</guid>
+      <guid>https://feilongwang.org/posts/learning-gradle/</guid>
       <description>Android Studio作为Android应用开发的官方IDE，默认使用Gradle作为构建工具，所以对于Android应用开发来说，Gradle是必须要掌握的工具。然而现实是，很多Android应用开发人员都不太了解Gradle，并且网上大部分关于Android Gradle的资料都是帮助解决某个具体的配置问题，缺乏系统深入的讲解。本文就来系统且深入的学习Gradle。
 Java构建工具的发展 Java构建工具最早出现的是Ant。Ant里的每一个任务（target）都可以互相依赖。Ant的最大缺点就是依赖的外部库也要添加到版本控制系统中，因为Ant没有一个机制来把这些外部库文件放在一个中央库里面，结果就是不断的拷贝和粘贴代码。
 随后Maven在2004年出现了，Maven引入了标准的项目和路径结构，还有依赖管理，不幸的是自定义的逻辑很难实现，唯一的方法就是引入插件。
@@ -53,9 +53,9 @@ Domain Specific Language (DSL) based on Groovy, used to describe and manipulate 
     </item>
     <item>
       <title>如何选择开源许可证</title>
-      <link>https://feil0n9wan9.github.io/posts/how-to-choose-an-open-source-license/</link>
+      <link>https://feilongwang.org/posts/how-to-choose-an-open-source-license/</link>
       <pubDate>Tue, 21 Jun 2016 00:09:48 +0000</pubDate>
-      <guid>https://feil0n9wan9.github.io/posts/how-to-choose-an-open-source-license/</guid>
+      <guid>https://feilongwang.org/posts/how-to-choose-an-open-source-license/</guid>
       <description>&lt;p&gt;对于软件产品，无论是免费发布还是出售，制定一份许可协议都非常有用。否则，对于前者，你相当于放弃了自己所有的权利，任何人都没有义务表明你的原始作者身份，对于后者，你将不得不花费比开发更多的精力用来逐个处理授权问题。许可，就是提供给使用你产品的人有一定的权限，不过你仍然拥有版权和专利（如果申请了的话）。&lt;a href=&#34;https://en.wikipedia.org/wiki/Open-source_license&#34;&gt;开源许可证&lt;/a&gt;使得我们发布开源软件产品变得简单。&lt;/p&gt;</description>
     </item>
   </channel>

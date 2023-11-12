@@ -2,18 +2,18 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>编译 on 静静的扯淡</title>
-    <link>https://feil0n9wan9.github.io/tags/%E7%BC%96%E8%AF%91/</link>
+    <link>https://feilongwang.org/tags/%E7%BC%96%E8%AF%91/</link>
     <description>Recent content in 编译 on 静静的扯淡</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     <copyright>© Feilong Wang</copyright>
     <lastBuildDate>Sat, 23 Jul 2016 22:40:29 +0000</lastBuildDate>
-    <atom:link href="https://feil0n9wan9.github.io/tags/%E7%BC%96%E8%AF%91/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://feilongwang.org/tags/%E7%BC%96%E8%AF%91/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Learning Gradle</title>
-      <link>https://feil0n9wan9.github.io/posts/learning-gradle/</link>
+      <link>https://feilongwang.org/posts/learning-gradle/</link>
       <pubDate>Sat, 23 Jul 2016 22:40:29 +0000</pubDate>
-      <guid>https://feil0n9wan9.github.io/posts/learning-gradle/</guid>
+      <guid>https://feilongwang.org/posts/learning-gradle/</guid>
       <description>Android Studio作为Android应用开发的官方IDE，默认使用Gradle作为构建工具，所以对于Android应用开发来说，Gradle是必须要掌握的工具。然而现实是，很多Android应用开发人员都不太了解Gradle，并且网上大部分关于Android Gradle的资料都是帮助解决某个具体的配置问题，缺乏系统深入的讲解。本文就来系统且深入的学习Gradle。
 Java构建工具的发展 Java构建工具最早出现的是Ant。Ant里的每一个任务（target）都可以互相依赖。Ant的最大缺点就是依赖的外部库也要添加到版本控制系统中，因为Ant没有一个机制来把这些外部库文件放在一个中央库里面，结果就是不断的拷贝和粘贴代码。
 随后Maven在2004年出现了，Maven引入了标准的项目和路径结构，还有依赖管理，不幸的是自定义的逻辑很难实现，唯一的方法就是引入插件。

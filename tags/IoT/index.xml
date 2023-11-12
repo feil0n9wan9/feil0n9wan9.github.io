@@ -2,18 +2,18 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>IoT on 静静的扯淡</title>
-    <link>https://feil0n9wan9.github.io/tags/iot/</link>
+    <link>https://feilongwang.org/tags/iot/</link>
     <description>Recent content in IoT on 静静的扯淡</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     <copyright>© Feilong Wang</copyright>
     <lastBuildDate>Thu, 05 Jan 2017 21:52:48 +0000</lastBuildDate>
-    <atom:link href="https://feil0n9wan9.github.io/tags/iot/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://feilongwang.org/tags/iot/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Android Things</title>
-      <link>https://feil0n9wan9.github.io/posts/android-things/</link>
+      <link>https://feilongwang.org/posts/android-things/</link>
       <pubDate>Thu, 05 Jan 2017 21:52:48 +0000</pubDate>
-      <guid>https://feil0n9wan9.github.io/posts/android-things/</guid>
+      <guid>https://feilongwang.org/posts/android-things/</guid>
       <description>&lt;p&gt;&lt;a href=&#34;https://www.google.com.hk/&#34;&gt;Google&lt;/a&gt;于12月13日对外发布了其新一代物联网操作系统&lt;a href=&#34;https://developer.android.com/things/index.html&#34;&gt;Android Things&lt;/a&gt;，它的愿景是为各种消费、零售和工业应用程序提供互连的设备，并提供完整立即可用的硬件解决方案，以进一步实现&lt;a href=&#34;https://developer.android.com/things/index.html&#34;&gt;If you can build an app, you can build a device&lt;/a&gt;。&lt;/p&gt;</description>
     </item>
   </channel>
