@@ -7,8 +7,15 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     <copyright>© Feilong Wang</copyright>
-    <lastBuildDate>Sat, 01 Jul 2017 20:23:04 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 09 May 2022 14:13:18 +0000</lastBuildDate>
     <atom:link href="https://feilongwang.org/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>初试Istio on ASK</title>
+      <link>https://feilongwang.org/posts/istio-on-ask/</link>
+      <pubDate>Mon, 09 May 2022 14:13:18 +0000</pubDate>
+      <guid>https://feilongwang.org/posts/istio-on-ask/</guid>
+      <description>&lt;p&gt;ASK作为&lt;a href=&#34;https://help.aliyun.com/document_detail/127525.html&#34;&gt;阿里云Serverless Kubernetes&lt;/a&gt;平台，不仅有免运维、秒级弹性、超大Pod容量、弹性预测等重磅能力，更重要的是它依然是一个标准Kubernetes平台。本文通过在ASK上试用Istio部署微服务应用来验证ASK对标准Kubernetes的兼容性。Istio作为Service Mesh（服务网格）的领导解决方案，一方面本身足够复杂具有代表性，另一方面它也代表了云原生时代微服务架构的趋势具有参考意义。&lt;/p&gt;</description>
+    </item>
     <item>
       <title>LocationManager内存泄露</title>
       <link>https://feilongwang.org/posts/memory-leak-in-locationmanager/</link>
@@ -42,14 +49,7 @@
       <link>https://feilongwang.org/posts/learning-gradle/</link>
       <pubDate>Sat, 23 Jul 2016 22:40:29 +0000</pubDate>
       <guid>https://feilongwang.org/posts/learning-gradle/</guid>
-      <description>Android Studio作为Android应用开发的官方IDE，默认使用Gradle作为构建工具，所以对于Android应用开发来说，Gradle是必须要掌握的工具。然而现实是，很多Android应用开发人员都不太了解Gradle，并且网上大部分关于Android Gradle的资料都是帮助解决某个具体的配置问题，缺乏系统深入的讲解。本文就来系统且深入的学习Gradle。
-Java构建工具的发展 Java构建工具最早出现的是Ant。Ant里的每一个任务（target）都可以互相依赖。Ant的最大缺点就是依赖的外部库也要添加到版本控制系统中，因为Ant没有一个机制来把这些外部库文件放在一个中央库里面，结果就是不断的拷贝和粘贴代码。
-随后Maven在2004年出现了，Maven引入了标准的项目和路径结构，还有依赖管理，不幸的是自定义的逻辑很难实现，唯一的方法就是引入插件。
-随后Ant通过Apache Ivy引入依赖管理来跟上Maven的脚步，Ant和Ivy集成实现了声明式的依赖，比如项目的编译和打包过程。
-Gradle的出现满足了很多现在构建工具的需求，Gradle提供了一个DSL（领域特定语言），一个约定优于配置的方法，还有更强大的依赖管理，Gradle使得我们可以抛弃XML的繁琐配置，引入动态语言Groovy来定义你的构建逻辑。
-Why Gradle Android Studio Project Site上对Android Studio为何选用Gradle作为构建工具描述如下：
-Gradle is an advanced build system as well as an advanced build toolkit allowing to create custom build logic through plugins. Here are some of its features that made us choose Gradle:
-Domain Specific Language (DSL) based on Groovy, used to describe and manipulate the build logic Build files are Groovy based and allow mixing of declarative elements through the DSL and using code to manipulate the DSL elements to provide custom logic.</description>
+      <description>&lt;p&gt;&lt;a href=&#34;https://developer.android.com/studio/index.html&#34;&gt;Android Studio&lt;/a&gt;作为Android应用开发的官方IDE，默认使用&lt;a href=&#34;https://www.gradle.org/&#34;&gt;Gradle&lt;/a&gt;作为构建工具，所以对于&lt;a href=&#34;https://developer.android.com&#34;&gt;Android应用开发&lt;/a&gt;来说，Gradle是必须要掌握的工具。然而现实是，很多Android应用开发人员都不太了解Gradle，并且网上大部分关于&lt;a href=&#34;https://developer.android.com/studio/releases/gradle-plugin.html&#34;&gt;Android Gradle&lt;/a&gt;的资料都是帮助解决某个具体的配置问题，缺乏系统深入的讲解。本文就来系统且深入的学习&lt;a href=&#34;https://www.gradle.org/&#34;&gt;Gradle&lt;/a&gt;。&lt;/p&gt;</description>
     </item>
     <item>
       <title>关于我</title>

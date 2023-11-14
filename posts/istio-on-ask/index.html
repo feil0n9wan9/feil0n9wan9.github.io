@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html><head lang="en">
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>初试Istio on ASK - 静静的扯淡</title><meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="ASK作为阿里云Serverless Kubernetes平台，不仅有免运维、秒级弹性、超大Pod容量、弹性预测等重磅能力，更重要的是它依然是一个标准Kubernetes平台。本文通过在ASK上试用Istio部署微服务应用来验证ASK对标准Kubernetes的兼容性。Istio作为Service Mesh（服务网格）的领导解决方案，一方面本身足够复杂具有代表性，另一方面它也代表了云原生时代微服务架构的趋势具有参考意义。" />
+	<meta property="og:image" content="https://raw.githubusercontent.com/feil0n9wan9/feil0n9wan9.github.io/master/images/about/me.jpg"/>
+	<meta property="og:title" content="初试Istio on ASK" />
+<meta property="og:description" content="ASK作为阿里云Serverless Kubernetes平台，不仅有免运维、秒级弹性、超大Pod容量、弹性预测等重磅能力，更重要的是它依然是一个标准Kubernetes平台。本文通过在ASK上试用Istio部署微服务应用来验证ASK对标准Kubernetes的兼容性。Istio作为Service Mesh（服务网格）的领导解决方案，一方面本身足够复杂具有代表性，另一方面它也代表了云原生时代微服务架构的趋势具有参考意义。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://feilongwang.org/posts/istio-on-ask/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2022-05-09T14:13:18+00:00" />
+<meta property="article:modified_time" content="2022-05-09T14:13:18+00:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="初试Istio on ASK"/>
+<meta name="twitter:description" content="ASK作为阿里云Serverless Kubernetes平台，不仅有免运维、秒级弹性、超大Pod容量、弹性预测等重磅能力，更重要的是它依然是一个标准Kubernetes平台。本文通过在ASK上试用Istio部署微服务应用来验证ASK对标准Kubernetes的兼容性。Istio作为Service Mesh（服务网格）的领导解决方案，一方面本身足够复杂具有代表性，另一方面它也代表了云原生时代微服务架构的趋势具有参考意义。"/>
+<script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+	<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@1,500&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Fira+Sans&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css?family=Roboto+Mono" rel="stylesheet">
+
+	
+	<link rel="stylesheet" type="text/css" media="screen" href="https://feilongwang.org/css/main.ac08a4c9714baa859217f92f051deb58df2938ec352b506df655005dcaf98cc0.css" />
+		<link id="darkModeStyle" rel="stylesheet" type="text/css" href="https://feilongwang.org/css/dark.726cd11ca6eb7c4f7d48eb420354f814e5c1b94281aaf8fd0511c1319f7f78a4.css"   />
+	
+
+	
+	
+
+	
+	
+	
+	
+</head>
+<body>
+        <div class="content"><header>
+	<div class="main">
+		<a href="https://feilongwang.org/">静静的扯淡</a>
+	</div>
+	<nav>
+		
+		<a href="/">Home</a>
+		
+		<a href="/posts">Posts</a>
+		
+		<a href="/tags">Tags</a>
+		
+		<a href="/about">About</a>
+		
+		
+	</nav>
+</header>
+
+<main>
+	<article>
+		<div class="title">
+			<h1 class="title">初试Istio on ASK</h1>
+			<div class="meta">Posted on May 9, 2022</div>
+		</div>
+		
+
+		<section class="body">
+			<p>ASK作为<a href="https://help.aliyun.com/document_detail/127525.html">阿里云Serverless Kubernetes</a>平台，不仅有免运维、秒级弹性、超大Pod容量、弹性预测等重磅能力，更重要的是它依然是一个标准Kubernetes平台。本文通过在ASK上试用Istio部署微服务应用来验证ASK对标准Kubernetes的兼容性。Istio作为Service Mesh（服务网格）的领导解决方案，一方面本身足够复杂具有代表性，另一方面它也代表了云原生时代微服务架构的趋势具有参考意义。</p>
+<h3 id="创建集群">创建集群</h3>
+<p>试用Istio前，需要准备一个ASK集群。登录<a href="https://www.aliyun.com">阿里云</a>控制台，选择 <strong>产品与服务 &gt; 容器服务 Kubernetes 版</strong>，在左侧边栏选择 <strong>集群</strong> 进入集群列表页面。点击右上角 <strong>创建集群</strong> 开始创建集群，配置集群参数如下：</p>
+<ul>
+<li>集群名称：hello-istio</li>
+<li>集群规格：Pro版</li>
+<li>地域：美国（硅谷）</li>
+<li>付费类型：按量付费</li>
+<li>Kubernetes 版本：1.20.11-aliyun.1</li>
+<li>专有网络：自动创建</li>
+<li>Service CIDR：172.21.0.0/20</li>
+<li>API Server 访问：标准型I（slb.s2.small）</li>
+<li>使用 EIP 暴露 API Server：是</li>
+<li>时区：Aisa/Shanghai（UTC+08:00）</li>
+<li>服务发现：CoreDNS</li>
+<li>使用日志服务：创建新 Project</li>
+</ul>
+<p>确认配置后点击 <strong>创建集群</strong> 进入等待集群创建完成。Istio依赖DNS服务，这里选择创建集群时默认安装<code>CoreDNS</code>组件。</p>
+<p><img src="/images/istio-on-ask/create-ask-cluster.png" alt=""></p>
+<p>集群创建完成后，进入 <strong>集群列表 &gt; hello-istio &gt; 详情 &gt; 集群信息 &gt; 连接信息</strong> 页面，复制 <strong>公网访问</strong> 内容到本地<code>/tmp/kube/config</code>文件，并通过如下命令配置好<code>kubelet</code>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ export KUBECONFIG<span style="color:#f92672">=</span>/tmp/kube/config
+</span></span></code></pre></div><h3 id="试用istio">试用Istio</h3>
+<p><code>kubectl</code>配置好后就可以开始在集群安装和试用Istio。</p>
+<h4 id="下载istio">下载Istio</h4>
+<p>进入<a href="https://github.com/istio/istio/releases/tag/1.13.3">Istio发布</a>页面下载针对操作系统的安装文件，也可以通过如下命令下载并提取最新版本：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ curl -L https://istio.io/downloadIstio | sh -
+</span></span></code></pre></div><p>因为我本机<code>~/bin</code>目录已加入PATH，这里我将提取的Istio目录复制<code>~/bin</code>目录，并建好软链接。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ cp istio-1.13.3 ~/bin
+</span></span><span style="display:flex;"><span>$ cd ~/bin
+</span></span><span style="display:flex;"><span>$ ln -s istio-1.13.3/bin/istioctl
+</span></span><span style="display:flex;"><span>$ ls -al ~/bin/
+</span></span><span style="display:flex;"><span>total <span style="color:#ae81ff">28</span>
+</span></span><span style="display:flex;"><span>drwxr-xr-x   <span style="color:#ae81ff">5</span> feilong.wfl staff   <span style="color:#ae81ff">160</span>  <span style="color:#ae81ff">5</span>  <span style="color:#ae81ff">4</span> 22:40 ./
+</span></span><span style="display:flex;"><span>drwxr-xr-x+ <span style="color:#ae81ff">95</span> feilong.wfl staff  <span style="color:#ae81ff">3040</span>  <span style="color:#ae81ff">5</span>  <span style="color:#ae81ff">8</span> 22:30 ../
+</span></span><span style="display:flex;"><span>drwxr-x---   <span style="color:#ae81ff">9</span> feilong.wfl staff   <span style="color:#ae81ff">288</span>  <span style="color:#ae81ff">4</span> <span style="color:#ae81ff">15</span> 00:48 istio-1.13.3/
+</span></span><span style="display:flex;"><span>lrwxr-xr-x   <span style="color:#ae81ff">1</span> feilong.wfl staff    <span style="color:#ae81ff">25</span>  <span style="color:#ae81ff">5</span>  <span style="color:#ae81ff">4</span> 22:40 istioctl -&gt; istio-1.13.3/bin/istioctl*
+</span></span></code></pre></div><p>如果<code>istioctl --help</code>命令输出正常，则istioctl已正确配置。</p>
+<h4 id="安装istio">安装Istio</h4>
+<ol>
+<li>本次安装采用demo <a href="https://istio.io/latest/docs/setup/additional-setup/config-profiles/">profile</a>，它包含了一组专为测试准备的功能集合，另外还有用户生产或性能测试的配置组合。</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ istioctl install --set profile<span style="color:#f92672">=</span>demo -y
+</span></span><span style="display:flex;"><span>✔ Istio core installed
+</span></span><span style="display:flex;"><span>✔ Istiod installed
+</span></span><span style="display:flex;"><span>✔ Egress gateways installed
+</span></span><span style="display:flex;"><span>✔ Ingress gateways installed
+</span></span><span style="display:flex;"><span>✔ Installation complete
+</span></span></code></pre></div><ol start="2">
+<li>给命名空间添加标签，指示Istio在部署应用的时候，自动注入Envoy边车代理：</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl label namespace default istio-injection<span style="color:#f92672">=</span>enabled
+</span></span><span style="display:flex;"><span>namespace/default labeled
+</span></span></code></pre></div><h4 id="部署示例应用">部署示例应用</h4>
+<ol>
+<li>部署<a href="https://istio.io/latest/zh/docs/examples/bookinfo/">Bookinfo示例应用</a>：</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl apply -f ~/bin/istio-1.13.3/samples/bookinfo/platform/kube/bookinfo.yaml
+</span></span><span style="display:flex;"><span>service/details created
+</span></span><span style="display:flex;"><span>serviceaccount/bookinfo-details created
+</span></span><span style="display:flex;"><span>deployment.apps/details-v1 created
+</span></span><span style="display:flex;"><span>service/ratings created
+</span></span><span style="display:flex;"><span>serviceaccount/bookinfo-ratings created
+</span></span><span style="display:flex;"><span>deployment.apps/ratings-v1 created
+</span></span><span style="display:flex;"><span>service/reviews created
+</span></span><span style="display:flex;"><span>serviceaccount/bookinfo-reviews created
+</span></span><span style="display:flex;"><span>deployment.apps/reviews-v1 created
+</span></span><span style="display:flex;"><span>deployment.apps/reviews-v2 created
+</span></span><span style="display:flex;"><span>deployment.apps/reviews-v3 created
+</span></span><span style="display:flex;"><span>service/productpage created
+</span></span><span style="display:flex;"><span>serviceaccount/bookinfo-productpage created
+</span></span><span style="display:flex;"><span>deployment.apps/productpage-v1 created
+</span></span></code></pre></div><ol start="2">
+<li>检查Pod已就绪：</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl get pods
+</span></span><span style="display:flex;"><span>NAME                              READY   STATUS    RESTARTS   AGE
+</span></span><span style="display:flex;"><span>details-v1-79f774bdb9-t2jhq       2/2     Running   <span style="color:#ae81ff">0</span>          2m54s
+</span></span><span style="display:flex;"><span>productpage-v1-6b746f74dc-qc9lg   2/2     Running   <span style="color:#ae81ff">0</span>          2m46s
+</span></span><span style="display:flex;"><span>ratings-v1-b6994bb9-tmbh6         2/2     Running   <span style="color:#ae81ff">0</span>          2m51s
+</span></span><span style="display:flex;"><span>reviews-v1-545db77b95-xdhp4       2/2     Running   <span style="color:#ae81ff">0</span>          2m49s
+</span></span><span style="display:flex;"><span>reviews-v2-7bf8c9648f-4gn6f       2/2     Running   <span style="color:#ae81ff">0</span>          2m48s
+</span></span><span style="display:flex;"><span>reviews-v3-84779c7bbc-jfndj       2/2     Running   <span style="color:#ae81ff">0</span>          2m48s
+</span></span></code></pre></div><blockquote>
+<p>要等待并确保所有的Pod达到此状态：就绪状态（READY）的值为2/2 、状态（STATUS）的值为Running。基于平台的不同，这个操作过程可能会花费几分钟的时间。</p>
+</blockquote>
+<ol start="3">
+<li>检查Service已就绪：</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl get services
+</span></span><span style="display:flex;"><span>NAME          TYPE        CLUSTER-IP      EXTERNAL-IP   PORT<span style="color:#f92672">(</span>S<span style="color:#f92672">)</span>    AGE
+</span></span><span style="display:flex;"><span>details       ClusterIP   172.21.11.168   &lt;none&gt;        9080/TCP   59s
+</span></span><span style="display:flex;"><span>kubernetes    ClusterIP   172.21.0.1      &lt;none&gt;        443/TCP    33m
+</span></span><span style="display:flex;"><span>productpage   ClusterIP   172.21.0.124    &lt;none&gt;        9080/TCP   51s
+</span></span><span style="display:flex;"><span>ratings       ClusterIP   172.21.9.7      &lt;none&gt;        9080/TCP   57s
+</span></span><span style="display:flex;"><span>reviews       ClusterIP   172.21.13.223   &lt;none&gt;        9080/TCP   55s
+</span></span></code></pre></div><ol start="4">
+<li>确保网页服务正常。如果命令返回页面标题，则应用已在集群中运行。</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl exec <span style="color:#e6db74">&#34;</span><span style="color:#66d9ef">$(</span>kubectl get pod -l app<span style="color:#f92672">=</span>ratings -o jsonpath<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;{.items[0].metadata.name}&#39;</span><span style="color:#66d9ef">)</span><span style="color:#e6db74">&#34;</span> -c ratings -- curl -s productpage:9080/productpage | grep -o <span style="color:#e6db74">&#34;&lt;title&gt;.*&lt;/title&gt;&#34;</span>
+</span></span><span style="display:flex;"><span>&lt;title&gt;Simple Bookstore App&lt;/title&gt;
+</span></span></code></pre></div><h4 id="对外开放服务">对外开放服务</h4>
+<p>现在，BookInfo应用已经部署，但还不能被外界访问。 要开放访问，需要创建Istio入站网关（Ingress Gateway）, 它会把一个路径路由到网格内的服务。</p>
+<ol>
+<li>把应用关联到Istio网关：</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl apply -f ~/bin/istio-1.13.3/samples/bookinfo/networking/bookinfo-gateway.yaml
+</span></span><span style="display:flex;"><span>gateway.networking.istio.io/bookinfo-gateway created
+</span></span><span style="display:flex;"><span>virtualservice.networking.istio.io/bookinfo created
+</span></span></code></pre></div><ol start="2">
+<li>确保配置文件没有问题：</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ istioctl analyze
+</span></span><span style="display:flex;"><span>✔ No validation issues found when analyzing namespace: default.
+</span></span></code></pre></div><h5 id="确定入站ip和端口">确定入站IP和端口</h5>
+<p>使用如下命令为访问网关设置<code>INGRESS_HOST</code>和<code>INGRESS_PORT</code>两个变量：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ export INGRESS_HOST<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>kubectl -n istio-system get service istio-ingressgateway -o jsonpath<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;{.status.loadBalancer.ingress[0].ip}&#39;</span><span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span>$ export INGRESS_PORT<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>kubectl -n istio-system get service istio-ingressgateway -o jsonpath<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;{.spec.ports[?(@.name==&#34;http2&#34;)].port}&#39;</span><span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span>$ export SECURE_INGRESS_PORT<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>kubectl -n istio-system get service istio-ingressgateway -o jsonpath<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;{.spec.ports[?(@.name==&#34;https&#34;)].port}&#39;</span><span style="color:#66d9ef">)</span>
+</span></span></code></pre></div><p>设置变量<code>GATEWAY_URL</code>，并确保IP地址和端口均成功的赋值给了该变量:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ export GATEWAY_URL<span style="color:#f92672">=</span>$INGRESS_HOST:$INGRESS_PORT
+</span></span><span style="display:flex;"><span>$ echo <span style="color:#e6db74">&#34;</span>$GATEWAY_URL<span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>47.88.21.82:80
+</span></span></code></pre></div><h5 id="验证外部访问">验证外部访问</h5>
+<p>运行下面命令，获取Bookinfo应用的外部访问地址：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ echo <span style="color:#e6db74">&#34;http://</span>$GATEWAY_URL<span style="color:#e6db74">/productpage&#34;</span>
+</span></span><span style="display:flex;"><span>http://47.88.21.82:80/productpage
+</span></span></code></pre></div><p>复制上面命令的输出地址到浏览器并访问，确认Bookinfo已经实现了外部访问。刷新页面，发现Book Reviews的显示样式会不断变化。
+<img src="/images/istio-on-ask/bookinfo-productpage.png" alt=""></p>
+<h4 id="查看仪表盘">查看仪表盘</h4>
+<p>仪表盘能帮助了解服务网格的结构、展示网络的拓扑结构、分析网格的健康状态。</p>
+<ol>
+<li>首先安装Kiali和其他插件，等待部署完成。</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl apply -f ~/bin/istio-1.13.3/samples/addons
+</span></span><span style="display:flex;"><span>$ kubectl rollout status deployment/kiali -n istio-system
+</span></span><span style="display:flex;"><span>Waiting <span style="color:#66d9ef">for</span> deployment <span style="color:#e6db74">&#34;kiali&#34;</span> rollout to finish: <span style="color:#ae81ff">0</span> of <span style="color:#ae81ff">1</span> updated replicas are available...
+</span></span><span style="display:flex;"><span>deployment <span style="color:#e6db74">&#34;kiali&#34;</span> successfully rolled out
+</span></span></code></pre></div><ol start="2">
+<li>访问Kiali仪表板。</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ istioctl dashboard kiali
+</span></span></code></pre></div><ol start="3">
+<li>在左侧的导航菜单，选择 <strong>Graph</strong>，然后在 <strong>Namespace</strong> 下拉列表中，选择 <strong>default</strong>。
+Kiali仪表板展示了网格的概览、以及Bookinfo示例应用的各个服务之间的关系。 它还提供过滤器来可视化流量的流动。
+<img src="/images/istio-on-ask/kiali-graph.png" alt=""></li>
+</ol>
+<h4 id="添加默认目标规则">添加默认目标规则</h4>
+<p>使用Istio控制Bookinfo版本路由前，需要先在<a href="https://istio.io/latest/docs/concepts/traffic-management/#destination-rules">目标规则</a>中定义好可用的版本。运行以下命令为Bookinfo服务创建默认的目标规则：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl apply -f ~/bin/istio-1.13.3/samples/bookinfo/networking/destination-rule-all.yaml
+</span></span><span style="display:flex;"><span>destinationrule.networking.istio.io/productpage created
+</span></span><span style="display:flex;"><span>destinationrule.networking.istio.io/reviews created
+</span></span><span style="display:flex;"><span>destinationrule.networking.istio.io/ratings created
+</span></span><span style="display:flex;"><span>destinationrule.networking.istio.io/details created
+</span></span></code></pre></div><p>等待几秒钟，目标规则生效。您可以使用如下命令查看目标规则：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl get destinationrules
+</span></span><span style="display:flex;"><span>NAME          HOST          AGE
+</span></span><span style="display:flex;"><span>details       details       30s
+</span></span><span style="display:flex;"><span>productpage   productpage   32s
+</span></span><span style="display:flex;"><span>ratings       ratings       31s
+</span></span><span style="display:flex;"><span>reviews       reviews       32s
+</span></span></code></pre></div><h4 id="路由所有流量到v1版本">路由所有流量到v1版本</h4>
+<p>运行以下命令创建<code>Virtual Service</code>将所有流量路由到微服务的v1版本：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl apply -f ~/bin/istio-1.13.3/samples/bookinfo/networking/virtual-service-all-v1.yaml
+</span></span><span style="display:flex;"><span>virtualservice.networking.istio.io/productpage created
+</span></span><span style="display:flex;"><span>virtualservice.networking.istio.io/reviews created
+</span></span><span style="display:flex;"><span>virtualservice.networking.istio.io/ratings created
+</span></span><span style="display:flex;"><span>virtualservice.networking.istio.io/details created
+</span></span></code></pre></div><p>您可以通过再次刷新Bookinfo应用程序的<code>/productpage</code>页面测试新配置。请注意，无论您刷新多少次，页面的评论部分都不会显示评级星标。这是因为当前已将Istio配置为评论服务的所有流量路由到版本<code>reviews:v1</code>，而此版本的服务不访问星级评分服务。</p>
+<h4 id="基于用户身份的路由">基于用户身份的路由</h4>
+<p>接下来将更改路由配置，实现将来自特定用户的所有流量路由到特定的服务版本。示例中来自名为Jason用户的所有流量将被路由到服务<code>review:v2</code>。</p>
+<blockquote>
+<p>Istio对用户身份没有任何特殊的内置机制。本例中，<code>productpage</code>服务在所有到<code>reviews</code>服务的HTTP请求中都增加了一个自定义的<code>end-user</code>请求头，从而达到效果。</p>
+</blockquote>
+<ol>
+<li>运行以下命令以启用基于用户的路由：</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl apply -f ~/bin/istio-1.13.3/samples/bookinfo/networking/virtual-service-reviews-test-v2.yaml
+</span></span><span style="display:flex;"><span>virtualservice.networking.istio.io/reviews created
+</span></span></code></pre></div><ol start="2">
+<li>确保规则已创建：</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl get virtualservice reviews -o yaml
+</span></span><span style="display:flex;"><span>apiVersion: networking.istio.io/v1beta1
+</span></span><span style="display:flex;"><span>kind: VirtualService
+</span></span><span style="display:flex;"><span>metadata:
+</span></span><span style="display:flex;"><span>  annotations:
+</span></span><span style="display:flex;"><span>    kubectl.kubernetes.io/last-applied-configuration: |
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">{</span><span style="color:#e6db74">&#34;apiVersion&#34;</span>:<span style="color:#e6db74">&#34;networking.istio.io/v1alpha3&#34;</span>,<span style="color:#e6db74">&#34;kind&#34;</span>:<span style="color:#e6db74">&#34;VirtualService&#34;</span>,<span style="color:#e6db74">&#34;metadata&#34;</span>:<span style="color:#f92672">{</span><span style="color:#e6db74">&#34;annotations&#34;</span>:<span style="color:#f92672">{}</span>,<span style="color:#e6db74">&#34;name&#34;</span>:<span style="color:#e6db74">&#34;reviews&#34;</span>,<span style="color:#e6db74">&#34;namespace&#34;</span>:<span style="color:#e6db74">&#34;default&#34;</span><span style="color:#f92672">}</span>,<span style="color:#e6db74">&#34;spec&#34;</span>:<span style="color:#f92672">{</span><span style="color:#e6db74">&#34;hosts&#34;</span>:<span style="color:#f92672">[</span><span style="color:#e6db74">&#34;reviews&#34;</span><span style="color:#f92672">]</span>,<span style="color:#e6db74">&#34;http&#34;</span>:<span style="color:#f92672">[{</span><span style="color:#e6db74">&#34;match&#34;</span>:<span style="color:#f92672">[{</span><span style="color:#e6db74">&#34;headers&#34;</span>:<span style="color:#f92672">{</span><span style="color:#e6db74">&#34;end-user&#34;</span>:<span style="color:#f92672">{</span><span style="color:#e6db74">&#34;exact&#34;</span>:<span style="color:#e6db74">&#34;jason&#34;</span><span style="color:#f92672">}}}]</span>,<span style="color:#e6db74">&#34;route&#34;</span>:<span style="color:#f92672">[{</span><span style="color:#e6db74">&#34;destination&#34;</span>:<span style="color:#f92672">{</span><span style="color:#e6db74">&#34;host&#34;</span>:<span style="color:#e6db74">&#34;reviews&#34;</span>,<span style="color:#e6db74">&#34;subset&#34;</span>:<span style="color:#e6db74">&#34;v2&#34;</span><span style="color:#f92672">}}]}</span>,<span style="color:#f92672">{</span><span style="color:#e6db74">&#34;route&#34;</span>:<span style="color:#f92672">[{</span><span style="color:#e6db74">&#34;destination&#34;</span>:<span style="color:#f92672">{</span><span style="color:#e6db74">&#34;host&#34;</span>:<span style="color:#e6db74">&#34;reviews&#34;</span>,<span style="color:#e6db74">&#34;subset&#34;</span>:<span style="color:#e6db74">&#34;v1&#34;</span><span style="color:#f92672">}}]}]}}</span>
+</span></span><span style="display:flex;"><span>  creationTimestamp: <span style="color:#e6db74">&#34;2022-05-15T16:05:55Z&#34;</span>
+</span></span><span style="display:flex;"><span>  generation: <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>  name: reviews
+</span></span><span style="display:flex;"><span>  namespace: default
+</span></span><span style="display:flex;"><span>  resourceVersion: <span style="color:#e6db74">&#34;1984849&#34;</span>
+</span></span><span style="display:flex;"><span>  uid: f3bd3dcb-d83c-4a75-9511-1fc9308ca05b
+</span></span><span style="display:flex;"><span>spec:
+</span></span><span style="display:flex;"><span>  hosts:
+</span></span><span style="display:flex;"><span>  - reviews
+</span></span><span style="display:flex;"><span>  http:
+</span></span><span style="display:flex;"><span>  - match:
+</span></span><span style="display:flex;"><span>    - headers:
+</span></span><span style="display:flex;"><span>        end-user:
+</span></span><span style="display:flex;"><span>          exact: jason
+</span></span><span style="display:flex;"><span>    route:
+</span></span><span style="display:flex;"><span>    - destination:
+</span></span><span style="display:flex;"><span>        host: reviews
+</span></span><span style="display:flex;"><span>        subset: v2
+</span></span><span style="display:flex;"><span>  - route:
+</span></span><span style="display:flex;"><span>    - destination:
+</span></span><span style="display:flex;"><span>        host: reviews
+</span></span><span style="display:flex;"><span>        subset: v1
+</span></span></code></pre></div><ol start="3">
+<li>
+<p>在Bookinfo应用程序的<code>/productpage</code>上，以用户<code>jason</code>身份登录。刷新浏览器，看到每个评论旁边显示星级评分。
+<img src="/images/istio-on-ask/bookinfo-productpage-jason.png" alt=""></p>
+</li>
+<li>
+<p>以其他用户身份登录，刷新浏览器。发现星级评分消失了。</p>
+</li>
+</ol>
+<h3 id="原理和限制">原理和限制</h3>
+<p><img src="/images/istio-on-ask/arch.svg" alt="">
+数据平面，Istio通过向Pod注入的Sidecar代理（istio-proxy）来负责协调和控制微服务之前的所有网络通信。为了让Sidecar代理（istio-proxy）劫持业务容器流量，Istio需要向Pod所在网络下发iptables规则。常规安装模式下，iptables规则下发是由Istio向Pod注入的初始化容器istio-init完成。向Pod网络下发iptables规则需要容器可以使用<code>NET_ADMIN</code>和<code>NET_RAW</code>两个高权限的能力（Capabilities）。ASK集群中这两个高权限能力受<a href="https://help.aliyun.com/document_detail/165047.html">ASK Pod Security Policy</a>和<a href="https://help.aliyun.com/document_detail/163023.html#section-s7d-j9e-p6t">ECI Container Security Policy</a>的影响。</p>
+<p>ASK Pod Security Policy的CAPS为<code>*</code>，表示没有限制。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl get psp
+</span></span><span style="display:flex;"><span>NAME             PRIV   CAPS   SELINUX    RUNASUSER   FSGROUP    SUPGROUP   READONLYROOTFS   VOLUMES
+</span></span><span style="display:flex;"><span>ack.privileged   true   *      RunAsAny   RunAsAny    RunAsAny   RunAsAny   false            *
+</span></span></code></pre></div><p>ECI Container Security Policy允许通过容器安全上下文配置即可。Istio中Pod注入模板文件<code>~/bin/istio-1.13.3/manifests/charts/istio-control/istio-discovery/files/injection-template.yaml</code>包含如下代码：不启用<a href="https://istio.io/latest/docs/setup/additional-setup/cni/">Istio CNI插件</a>将添加<code>NET_ADMIN</code>和<code>NET_RAW</code>两个高权限能力：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>securityContext:
+</span></span><span style="display:flex;"><span>  allowPrivilegeEscalation: <span style="color:#f92672">{{</span> .Values.global.proxy.privileged <span style="color:#f92672">}}</span>
+</span></span><span style="display:flex;"><span>  privileged: <span style="color:#f92672">{{</span> .Values.global.proxy.privileged <span style="color:#f92672">}}</span>
+</span></span><span style="display:flex;"><span>  capabilities:
+</span></span><span style="display:flex;"><span><span style="color:#f92672">{{</span>- <span style="color:#66d9ef">if</span> not .Values.istio_cni.enabled <span style="color:#f92672">}}</span>
+</span></span><span style="display:flex;"><span>    add:
+</span></span><span style="display:flex;"><span>    - NET_ADMIN
+</span></span><span style="display:flex;"><span>    - NET_RAW
+</span></span><span style="display:flex;"><span><span style="color:#f92672">{{</span>- end <span style="color:#f92672">}}</span>
+</span></span><span style="display:flex;"><span>    drop:
+</span></span><span style="display:flex;"><span>    - ALL
+</span></span></code></pre></div><p>所以从原理上分析当前ASK集群使用Istio没有兼容性问题。</p>
+<h3 id="总结">总结</h3>
+<p>本次在ASK上试用Istio这类高复杂度的软件，未发现兼容性问题。又从原理上正面分析论证了产生兼容性问题的可能性较低。目前来看，ASK对原生Kubernetes还是有着极好的兼容性。后续将在ASK集群上深入探索Istio其他功能，以进一步验证ASK对原生Kubernetes的兼容性。</p>
+<hr>
+<p>参考：</p>
+<ul>
+<li><a href="https://istio.io/latest/docs/setup/getting-started/">https://istio.io/latest/docs/setup/getting-started/</a></li>
+<li><a href="https://istio.io/latest/docs/ops/deployment/requirements/">https://istio.io/latest/docs/ops/deployment/requirements/</a></li>
+<li><a href="https://istio.io/latest/docs/ops/deployment/architecture/">https://istio.io/latest/docs/ops/deployment/architecture/</a></li>
+<li><a href="https://istio.io/latest/docs/setup/additional-setup/cni/">https://istio.io/latest/docs/setup/additional-setup/cni/</a></li>
+<li><a href="https://istio.io/latest/docs/tasks/traffic-management/request-routing/">https://istio.io/latest/docs/tasks/traffic-management/request-routing/</a></li>
+</ul>
+		</section>
+
+		<div class="post-tags">
+			
+			
+			<nav class="nav tags">
+				<ul class="tags">
+					
+					<li><a href="/tags/istio">Istio</a></li>
+					
+					<li><a href="/tags/ask">ASK</a></li>
+					
+					<li><a href="/tags/service-mesh">Service Mesh</a></li>
+					
+					<li><a href="/tags/serverless">Serverless</a></li>
+					
+					<li><a href="/tags/kubernetes">Kubernetes</a></li>
+					
+					<li><a href="/tags/%E6%9C%8D%E5%8A%A1%E7%BD%91%E6%A0%BC">服务网格</a></li>
+					
+				</ul>
+			</nav>
+			
+			
+		</div>
+		</article>
+</main>
+<footer>
+  <div style="display:flex"><a class="soc" href="https://github.com/feil0n9wan9" rel="me" title="GitHub"><i data-feather="github"></i></a>
+    <a class="border"></a><a class="soc" href="https://www.jianshu.com/u/5215dba27120" rel="me" title="JianShu"><i data-feather="book"></i></a>
+    <a class="border"></a></div>
+  <div class="footer-info">
+    2023  © Feilong Wang |  <a
+      href="https://github.com/athul/archie">Archie Theme</a> | Built with <a href="https://gohugo.io">Hugo</a>
+  </div>
+</footer>
+
+
+<script>
+  feather.replace()
+</script></div>
+    </body>
+</html>

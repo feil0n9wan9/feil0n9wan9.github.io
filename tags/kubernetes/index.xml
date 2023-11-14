@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Kubernetes on 静静的扯淡</title>
+    <link>https://feilongwang.org/tags/kubernetes/</link>
+    <description>Recent content in Kubernetes on 静静的扯淡</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <copyright>© Feilong Wang</copyright>
+    <lastBuildDate>Mon, 09 May 2022 14:13:18 +0000</lastBuildDate>
+    <atom:link href="https://feilongwang.org/tags/kubernetes/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>初试Istio on ASK</title>
+      <link>https://feilongwang.org/posts/istio-on-ask/</link>
+      <pubDate>Mon, 09 May 2022 14:13:18 +0000</pubDate>
+      <guid>https://feilongwang.org/posts/istio-on-ask/</guid>
+      <description>&lt;p&gt;ASK作为&lt;a href=&#34;https://help.aliyun.com/document_detail/127525.html&#34;&gt;阿里云Serverless Kubernetes&lt;/a&gt;平台，不仅有免运维、秒级弹性、超大Pod容量、弹性预测等重磅能力，更重要的是它依然是一个标准Kubernetes平台。本文通过在ASK上试用Istio部署微服务应用来验证ASK对标准Kubernetes的兼容性。Istio作为Service Mesh（服务网格）的领导解决方案，一方面本身足够复杂具有代表性，另一方面它也代表了云原生时代微服务架构的趋势具有参考意义。&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>
